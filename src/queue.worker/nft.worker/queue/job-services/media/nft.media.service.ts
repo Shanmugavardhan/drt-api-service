@@ -1,6 +1,6 @@
-import { ApiService } from "@terradharitri/sdk-nestjs-http";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
-import { BinaryUtils, Constants } from "@terradharitri/sdk-nestjs-common";
+import { ApiService } from "@sravankumar02/sdk-nestjs-http";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
+import { BinaryUtils, Constants } from "@sravankumar02/sdk-nestjs-common";
 import { HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { CacheInfo } from "src/utils/cache.info";
@@ -8,10 +8,9 @@ import { PersistenceService } from "src/common/persistence/persistence.service";
 import { MediaMimeTypeEnum } from "src/endpoints/nfts/entities/media.mime.type";
 import { Nft } from "src/endpoints/nfts/entities/nft";
 import { NftMedia } from "src/endpoints/nfts/entities/nft.media";
-import { NftType } from "src/endpoints/nfts/entities/nft.type";
 import { TokenHelpers } from "src/utils/token.helpers";
 import { ClientProxy } from "@nestjs/microservices";
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { CachingUtils } from "src/utils/caching.utils";
 
 @Injectable()
@@ -63,10 +62,6 @@ export class NftMediaService {
   }
 
   private async getMediaRaw(nft: Nft): Promise<NftMedia[] | null> {
-    if (nft.type === NftType.MetaDCDT) {
-      return null;
-    }
-
     if (!nft.uris) {
       return null;
     }
@@ -164,7 +159,8 @@ export class NftMediaService {
   }
 
   private isContentTypeAccepted(contentType: string): boolean {
-    return Object.values(MediaMimeTypeEnum).includes(contentType as MediaMimeTypeEnum);
+    const baseContentType = contentType.split(';')[0].trim();
+    return Object.values(MediaMimeTypeEnum).includes(baseContentType as MediaMimeTypeEnum);
   }
 
   private isFileSizeAccepted(fileSize: number): boolean {

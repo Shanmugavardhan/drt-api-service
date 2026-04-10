@@ -7,8 +7,8 @@ import { MoaEconomicsService } from "src/endpoints/moa/moa.economics.service";
 import { MoaPairService } from "src/endpoints/moa/moa.pair.service";
 import { MoaTokenService } from "src/endpoints/moa/moa.token.service";
 import { MoaFarmService } from "src/endpoints/moa/moa.farm.service";
-import { Lock, Locker } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { Lock, Locker } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 
 @Injectable()
 export class MoaWarmerService {

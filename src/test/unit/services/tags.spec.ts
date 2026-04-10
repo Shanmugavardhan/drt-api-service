@@ -1,4 +1,4 @@
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Test } from "@nestjs/testing";
 import { QueryPagination } from "src/common/entities/query.pagination";
 import { IndexerService } from "src/common/indexer/indexer.service";

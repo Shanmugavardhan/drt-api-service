@@ -7,7 +7,7 @@ import { MoaModule } from 'src/endpoints/moa/moa.module';
 import { AssetsModule } from 'src/common/assets/assets.module';
 import { DynamicModuleUtils } from 'src/utils/dynamic.module.utils';
 import { NftCronModule } from '../nft/nft.cron.module';
-import { GuestCacheWarmer } from '@terradharitri/sdk-nestjs-cache';
+import { GuestCacheWarmer } from '@sravankumar02/sdk-nestjs-cache';
 import { PluginModule } from 'src/plugins/plugin.module';
 import { TpsWarmerService } from '../tps/tps-warmer.service';
 import { TpsModule } from 'src/endpoints/tps/tps.module';

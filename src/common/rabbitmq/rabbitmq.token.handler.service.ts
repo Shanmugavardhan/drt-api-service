@@ -3,8 +3,8 @@ import { CacheInfo } from '../../utils/cache.info';
 import { NotifierEvent } from './entities/notifier.event';
 import { DcdtService } from 'src/endpoints/dcdt/dcdt.service';
 import { ClientProxy } from '@nestjs/microservices';
-import { BinaryUtils, OriginLogger } from '@terradharitri/sdk-nestjs-common';
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { BinaryUtils, OriginLogger } from '@sravankumar02/sdk-nestjs-common';
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 
 @Injectable()
 export class RabbitMqTokenHandlerService {

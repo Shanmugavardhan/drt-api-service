@@ -1,4 +1,4 @@
-import { QueryConditionOptions } from "@terradharitri/sdk-nestjs-elastic";
+import { QueryConditionOptions } from "@sravankumar02/sdk-nestjs-elastic";
 import { SortOrder } from "src/common/entities/sort.order";
 import { TransactionStatus } from "./transaction.status";
 import { TransactionType } from "./transaction.type";

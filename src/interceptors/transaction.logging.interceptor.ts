@@ -1,4 +1,4 @@
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from "@nestjs/common";
 import { Observable } from "rxjs";
 import { GatewayProxyController } from "src/endpoints/proxy/gateway.proxy.controller";

@@ -1,4 +1,4 @@
-import { MetricsService } from "@terradharitri/sdk-nestjs-monitoring";
+import { MetricsService } from "@sravankumar02/sdk-nestjs-monitoring";
 import { Test } from "@nestjs/testing";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { GatewayService } from "src/common/gateway/gateway.service";

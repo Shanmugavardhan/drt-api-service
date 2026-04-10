@@ -1,12 +1,12 @@
-import { CacheModule, RedisCacheModuleOptions, RedisCacheModule } from '@terradharitri/sdk-nestjs-cache';
-import { ElasticModule, ElasticModuleOptions } from "@terradharitri/sdk-nestjs-elastic";
-import { ApiModule, ApiModuleOptions } from "@terradharitri/sdk-nestjs-http";
+import { CacheModule, RedisCacheModuleOptions, RedisCacheModule } from '@sravankumar02/sdk-nestjs-cache';
+import { ElasticModule, ElasticModuleOptions } from "@sravankumar02/sdk-nestjs-elastic";
+import { ApiModule, ApiModuleOptions } from "@sravankumar02/sdk-nestjs-http";
 import { DynamicModule, Provider } from "@nestjs/common";
 import { ClientOptions, ClientProxyFactory, Transport } from "@nestjs/microservices";
 import { ApiConfigModule } from "src/common/api-config/api.config.module";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { DrtnestConfigServiceImpl } from "src/common/api-config/drtnest-config-service-impl.service";
-import { DRTNEST_CONFIG_SERVICE } from "@terradharitri/sdk-nestjs-common";
+import { DRTNEST_CONFIG_SERVICE } from "@sravankumar02/sdk-nestjs-common";
 
 export class DynamicModuleUtils {
   static getElasticModule(): DynamicModule {

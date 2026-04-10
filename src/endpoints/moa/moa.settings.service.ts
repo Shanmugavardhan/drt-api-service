@@ -1,5 +1,5 @@
-import { Constants } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { Constants } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Injectable } from "@nestjs/common";
 import { CacheInfo } from "src/utils/cache.info";
 import { GraphQlService } from "src/common/graphql/graphql.service";
@@ -62,7 +62,7 @@ export class MoaSettingsService {
   }
 
   async getMoaContracts(): Promise<Set<string>> {
-    let contracts = await this.cachingService.getLocal<Set<string>>(CacheInfo.MoaContracts.key);
+    let contracts = this.cachingService.getLocal<Set<string>>(CacheInfo.MoaContracts.key);
     if (!contracts) {
       contracts = await this.getMoaContractsRaw();
       this.cachingService.setLocal(CacheInfo.MoaContracts.key, contracts, Constants.oneMinute() * 10);

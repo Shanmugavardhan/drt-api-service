@@ -1,8 +1,8 @@
 import { TransactionFilter } from "src/endpoints/transactions/entities/transaction.filter";
 import { TransactionOperation } from "src/endpoints/transactions/entities/transaction.operation";
 import { TransactionOperationAction } from "src/endpoints/transactions/entities/transaction.operation.action";
-import '@terradharitri/sdk-nestjs-common/lib/utils/extensions/array.extensions';
-import { QueryConditionOptions } from "@terradharitri/sdk-nestjs-elastic";
+import '@sravankumar02/sdk-nestjs-common/lib/utils/extensions/array.extensions';
+import { QueryConditionOptions } from "@sravankumar02/sdk-nestjs-elastic";
 
 export class TransactionUtils {
   static isTransactionCountQueryWithAddressOnly(filter: TransactionFilter, address?: string) {

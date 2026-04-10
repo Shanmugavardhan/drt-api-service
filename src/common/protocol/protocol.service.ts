@@ -1,5 +1,5 @@
-import { AddressUtils, OriginLogger } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { AddressUtils, OriginLogger } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { CacheInfo } from "../../utils/cache.info";
 import { GatewayService } from "../gateway/gateway.service";

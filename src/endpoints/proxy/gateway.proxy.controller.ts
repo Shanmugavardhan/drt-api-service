@@ -6,11 +6,11 @@ import { GatewayService } from "src/common/gateway/gateway.service";
 import { Response, Request } from "express";
 import { GatewayComponentRequest } from "src/common/gateway/entities/gateway.component.request";
 import { PluginService } from "src/common/plugins/plugin.service";
-import { Constants, ParseAddressPipe, ParseBlockHashPipe, ParseBlsHashPipe, ParseIntPipe, ParseTransactionHashPipe, ParseBoolPipe } from "@terradharitri/sdk-nestjs-common";
-import { CacheService, NoCache } from "@terradharitri/sdk-nestjs-cache";
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { Constants, ParseAddressPipe, ParseBlockHashPipe, ParseBlsHashPipe, ParseIntPipe, ParseTransactionHashPipe, ParseBoolPipe } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService, NoCache } from "@sravankumar02/sdk-nestjs-cache";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { DeepHistoryInterceptor } from "src/interceptors/deep-history.interceptor";
-import { DisableFieldsInterceptorOnController } from "@terradharitri/sdk-nestjs-http";
+import { DisableFieldsInterceptorOnController } from "@sravankumar02/sdk-nestjs-http";
 
 @Controller()
 @ApiTags('proxy')
@@ -317,7 +317,15 @@ export class GatewayProxyController {
     @Param('hash') hash: number,
     @Query('withTxs') withTxs?: string,
   ) {
-    return await this.gatewayGet(`block/${shard}/by-hash/${hash}`, GatewayComponentRequest.blockByHash, { withTxs });
+    // eslint-disable-next-line require-await
+    return await this.gatewayGet(`block/${shard}/by-hash/${hash}`, GatewayComponentRequest.blockByHash, { withTxs }, async (error) => {
+      const message = error.response?.data?.error;
+      if (message && (message.includes('key not found') || message.includes('getting block failed'))) {
+        throw error;
+      }
+
+      return false;
+    });
   }
 
   @Get('/block-atlas/:shard/:nonce')

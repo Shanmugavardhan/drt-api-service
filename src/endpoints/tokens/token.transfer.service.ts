@@ -11,9 +11,9 @@ import { TransactionLogEvent } from "../transactions/entities/transaction.log.ev
 import { TransactionOperationType } from "../transactions/entities/transaction.operation.type";
 import { SmartContractResult } from "../sc-results/entities/smart.contract.result";
 import { TransactionDetailed } from "../transactions/entities/transaction.detailed";
-import { BinaryUtils } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { BinaryUtils } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { DataApiService } from "src/common/data-api/data-api.service";
 import BigNumber from "bignumber.js";
 import { DcdtType } from "../dcdt/entities/dcdt.type";
@@ -344,13 +344,13 @@ export class TokenTransferService {
       svgUrl: assets?.svgUrl ?? '',
     };
 
-    if (properties.type === 'FungibleDCDT') {
+    if (properties.type === DcdtType.FungibleDCDT) {
       result.token = identifier;
     } else {
       result.collection = identifier;
     }
 
-    if (['FungibleDCDT', 'MetaDCDT'].includes(properties.type)) {
+    if ([DcdtType.FungibleDCDT, DcdtType.MetaDCDT].includes(properties.type)) {
       result.decimals = properties.decimals;
     }
 

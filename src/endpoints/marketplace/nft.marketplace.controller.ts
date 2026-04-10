@@ -1,4 +1,4 @@
-import { ParseAddressPipe, ParseCollectionPipe, ParseEnumPipe } from "@terradharitri/sdk-nestjs-common";
+import { ParseAddressPipe, ParseCollectionPipe, ParseEnumPipe } from "@sravankumar02/sdk-nestjs-common";
 import { Controller, DefaultValuePipe, Get, NotFoundException, Param, ParseIntPipe, Query } from "@nestjs/common";
 import { ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { QueryPagination } from "src/common/entities/query.pagination";

@@ -99,10 +99,10 @@ describe('API Config', () => {
     it("should return socket url", () => {
       jest
         .spyOn(ConfigService.prototype, "get")
-        .mockImplementation(jest.fn(() => ['socket-fra.dharitri.org']));
+        .mockImplementation(jest.fn(() => ['socket-fra.numbat.com']));
 
       const results = apiConfigService.getSocketUrl();
-      expect(results).toEqual(['socket-fra.dharitri.org']);
+      expect(results).toEqual(['socket-fra.numbat.com']);
     });
 
     it("should throw error because test simulates that socket url is not defined", () => {
@@ -114,7 +114,7 @@ describe('API Config', () => {
     });
   });
 
-  describe("getDurianIdUrl", () => {
+  describe("getMaiarIdUrl", () => {
     it("should return durianId url", () => {
       jest
         .spyOn(ConfigService.prototype, "get")
@@ -129,10 +129,10 @@ describe('API Config', () => {
     it("should return dcdt contract address", () => {
       jest
         .spyOn(ConfigService.prototype, "get")
-        .mockImplementation(jest.fn(() => 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2'));
+        .mockImplementation(jest.fn(() => 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez'));
 
       const results = apiConfigService.getDcdtContractAddress();
-      expect(results).toEqual('drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2');
+      expect(results).toEqual('drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez');
     });
 
     it("should throw error because test simulates that dcdt contract address is not defined", () => {
@@ -148,10 +148,10 @@ describe('API Config', () => {
     it("should return auction contract address", () => {
       jest
         .spyOn(ConfigService.prototype, "get")
-        .mockImplementation(jest.fn(() => 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf'));
+        .mockImplementation(jest.fn(() => 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp'));
 
       const results = apiConfigService.getAuctionContractAddress();
-      expect(results).toEqual('drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf');
+      expect(results).toEqual('drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp');
     });
   });
 
@@ -159,10 +159,10 @@ describe('API Config', () => {
     it("should return staking contract address", () => {
       jest
         .spyOn(ConfigService.prototype, "get")
-        .mockImplementation(jest.fn(() => 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqqllls9k7r6g'));
+        .mockImplementation(jest.fn(() => 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqlllsjr0pnq'));
 
       const results = apiConfigService.getStakingContractAddress();
-      expect(results).toEqual('drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqqllls9k7r6g');
+      expect(results).toEqual('drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqlllsjr0pnq');
     });
   });
 
@@ -192,10 +192,10 @@ describe('API Config', () => {
     it("should return delegation manager contract address", () => {
       jest
         .spyOn(ConfigService.prototype, "get")
-        .mockImplementation(jest.fn(() => 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqyllls4jxmwv'));
+        .mockImplementation(jest.fn(() => 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllsz8he8y'));
 
       const results = apiConfigService.getDelegationManagerContractAddress();
-      expect(results).toEqual('drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqyllls4jxmwv');
+      expect(results).toEqual('drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllsz8he8y');
     });
 
     it("should throw error because test simulates that delegation manager contract address is not defined", () => {
@@ -1090,10 +1090,10 @@ describe('API Config', () => {
     it("should return media url", () => {
       jest
         .spyOn(ConfigService.prototype, "get")
-        .mockImplementation(jest.fn(() => 'https://media.dharitri.org'));
+        .mockImplementation(jest.fn(() => 'https://media.numbat.com'));
 
       const results = apiConfigService.getMediaUrl();
-      expect(results).toEqual('https://media.dharitri.org');
+      expect(results).toEqual('https://media.numbat.com');
     });
 
     it.skip("should throw error because test simulates that media url is not defined", () => {
@@ -1109,10 +1109,10 @@ describe('API Config', () => {
     it("should return media internal url", () => {
       jest
         .spyOn(ConfigService.prototype, "get")
-        .mockImplementation(jest.fn(() => 'https://media-internal.dharitri.org'));
+        .mockImplementation(jest.fn(() => 'https://media-internal.numbat.com'));
 
       const results = apiConfigService.getMediaInternalUrl();
-      expect(results).toEqual('https://media-internal.dharitri.org');
+      expect(results).toEqual('https://media-internal.numbat.com');
     });
 
     it("should throw error because test simulates that media internal url is not defined", () => {
@@ -1122,25 +1122,6 @@ describe('API Config', () => {
 
       const results = apiConfigService.getMediaInternalUrl();
       expect(results).toEqual(undefined);
-    });
-  });
-
-  describe("getNftThumbnailsUrl", () => {
-    it("should return nft thumbnails url", () => {
-      jest
-        .spyOn(ConfigService.prototype, "get")
-        .mockImplementation(jest.fn(() => 'https://media.dharitri.org/nfts/thumbnail'));
-
-      const results = apiConfigService.getNftThumbnailsUrl();
-      expect(results).toEqual('https://media.dharitri.org/nfts/thumbnail');
-    });
-
-    it("should throw error because test simulates that nft thumbnails urls are not defined", () => {
-      jest
-        .spyOn(ConfigService.prototype, 'get')
-        .mockImplementation(jest.fn(() => undefined));
-
-      expect(() => apiConfigService.getNftThumbnailsUrl()).toThrowError('No nft thumbnails url present');
     });
   });
 
@@ -1321,17 +1302,17 @@ describe('API Config', () => {
     });
   });
 
-  describe("getDurianExchangeUrlMandatory", () => {
-    it("should return Durian Exchange Url", () => {
+  describe("getMaiarExchangeUrlMandatory", () => {
+    it("should return Maiar Exchange Url", () => {
       jest
         .spyOn(ConfigService.prototype, "get")
-        .mockImplementation(jest.fn(() => 'https://graph.dharitrix.org/graphql'));
+        .mockImplementation(jest.fn(() => 'https://graph.dharitrix.com/graphql'));
 
       const results = apiConfigService.getExchangeServiceUrlMandatory();
-      expect(results).toEqual('https://graph.dharitrix.org/graphql');
+      expect(results).toEqual('https://graph.dharitrix.com/graphql');
     });
 
-    it("should throw new error because test simulates that Durian Exchange Url is not defined", () => {
+    it("should throw new error because test simulates that Maiar Exchange Url is not defined", () => {
       jest
         .spyOn(ConfigService.prototype, 'get')
         .mockImplementation(jest.fn(() => undefined));
@@ -1462,7 +1443,7 @@ describe('API Config', () => {
         .spyOn(ConfigService.prototype, "get")
         .mockImplementation(jest.fn(() => [
           'https://api.dharitri.org',
-          'https://devnet-api.dharitri.org',
+          'https://pdt-belts-marc-are.trycloudflare.com',
           'https://testnet-api.dharitri.org',
         ]));
 
@@ -1470,7 +1451,7 @@ describe('API Config', () => {
 
       expect(results).toEqual(expect.arrayContaining([
         'https://api.dharitri.org',
-        'https://devnet-api.dharitri.org',
+        'https://pdt-belts-marc-are.trycloudflare.com',
         'https://testnet-api.dharitri.org',
       ]));
     });

@@ -1,4 +1,4 @@
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { ShardTransaction, TransactionProcessor } from "@terradharitri/sdk-transaction-processor";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";

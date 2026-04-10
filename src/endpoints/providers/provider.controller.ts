@@ -2,7 +2,7 @@ import { Controller, DefaultValuePipe, Get, HttpException, HttpStatus, Param, Pa
 import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { ProviderService } from "./provider.service";
 import { Provider } from "./entities/provider";
-import { ParseAddressArrayPipe, ParseAddressPipe, ParseBoolPipe } from "@terradharitri/sdk-nestjs-common";
+import { ParseAddressArrayPipe, ParseAddressPipe, ParseBoolPipe } from "@sravankumar02/sdk-nestjs-common";
 import { ProviderFilter } from "./entities/provider.filter";
 import { Response } from "express";
 import { ProviderQueryOptions } from "./entities/provider.query.options";

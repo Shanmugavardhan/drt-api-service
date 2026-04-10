@@ -4,8 +4,8 @@ import { ProviderService } from "src/endpoints/providers/provider.service";
 import { KeybaseIdentity } from "./entities/keybase.identity";
 import { CacheInfo } from "../../utils/cache.info";
 import { AssetsService } from "../assets/assets.service";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
-import { AddressUtils, OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
+import { AddressUtils, OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { ApiConfigService } from "../api-config/api.config.service";
 
 @Injectable()
@@ -127,7 +127,7 @@ export class KeybaseService {
 
     return new KeybaseIdentity({
       identity,
-      avatar: `https://raw.githubusercontent.com/TerraDharitri/drt-assets/master${folder}/identities/${identity}/logo.png`,
+      avatar: `https://raw.githubusercontent.com/terradharitri/drt-assets/master${folder}/identities/${identity}/logo.png`,
       ...info,
     });
   }

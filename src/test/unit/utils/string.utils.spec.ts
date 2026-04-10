@@ -1,4 +1,4 @@
-import { StringUtils } from "@terradharitri/sdk-nestjs-common";
+import { StringUtils } from "@sravankumar02/sdk-nestjs-common";
 
 describe('String Utils', () => {
   describe('isHex', () => {

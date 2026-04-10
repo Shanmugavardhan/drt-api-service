@@ -15,9 +15,9 @@ import { DcdtAddressService } from "../dcdt/dcdt.address.service";
 import { CollectionRoles } from "../tokens/entities/collection.roles";
 import { TokenHelpers } from "src/utils/token.helpers";
 import { NftCollectionAccount } from "./entities/nft.collection.account";
-import { BinaryUtils, TokenUtils } from "@terradharitri/sdk-nestjs-common";
-import { ApiUtils } from "@terradharitri/sdk-nestjs-http";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { BinaryUtils, TokenUtils } from "@sravankumar02/sdk-nestjs-common";
+import { ApiUtils } from "@sravankumar02/sdk-nestjs-http";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { IndexerService } from "src/common/indexer/indexer.service";
 import { Collection } from "src/common/indexer/entities";
 import { PersistenceService } from "src/common/persistence/persistence.service";
@@ -29,6 +29,7 @@ import { CollectionLogo } from "./entities/collection.logo";
 import { ScamInfo } from "src/common/entities/scam-info.dto";
 import { NftType as ElasticNftType } from "src/common/indexer/entities/nft.type";
 import { NftSubType } from "../nfts/entities/nft.sub.type";
+import { ConcurrencyUtils } from "src/utils/concurrency.utils";
 
 @Injectable()
 export class CollectionService {
@@ -50,8 +51,40 @@ export class CollectionService {
   }
 
   async getNftCollections(pagination: QueryPagination, filter: CollectionFilter): Promise<NftCollection[]> {
+    if (this.isCacheableCollectionFilter(filter)) {
+      return await this.cachingService.getOrSet(
+        CacheInfo.Collections(pagination).key,
+        () => this.fetchAndProcessCollections(pagination, filter),
+        CacheInfo.Collections(pagination).ttl,
+      );
+    }
+
+    return await this.fetchAndProcessCollections(pagination, filter);
+  }
+
+  private async fetchAndProcessCollections(pagination: QueryPagination, filter: CollectionFilter): Promise<NftCollection[]> {
     const tokenCollections = await this.indexerService.getNftCollections(pagination, filter);
     return await this.processNftCollections(tokenCollections);
+  }
+
+  private isCacheableCollectionFilter(filter: CollectionFilter): boolean {
+    return !filter.collection &&
+      !(filter.identifiers && filter.identifiers.length > 0) &&
+      !(filter.type && filter.type.length > 0) &&
+      !(filter.subType && filter.subType.length > 0) &&
+      !filter.search &&
+      !filter.owner &&
+      filter.before === undefined &&
+      filter.after === undefined &&
+      filter.canCreate === undefined &&
+      filter.canBurn === undefined &&
+      filter.canAddQuantity === undefined &&
+      filter.canUpdateAttributes === undefined &&
+      filter.canAddUri === undefined &&
+      filter.canTransferRole === undefined &&
+      filter.excludeMetaDCDT === undefined &&
+      filter.sort === undefined &&
+      filter.order === undefined;
   }
 
   async getNftCollectionsByIds(identifiers: Array<string>): Promise<NftCollection[]> {
@@ -62,20 +95,41 @@ export class CollectionService {
   private async processNftCollections(tokenCollections: Collection[]): Promise<NftCollection[]> {
     const collectionsIdentifiers = tokenCollections.map((collection) => collection.token);
 
-    const indexedCollections: Record<string, any> = {};
-    for (const collection of tokenCollections) {
-      indexedCollections[collection.token] = collection;
-    }
+    const collectionsAssets = await this.batchGetCollectionsAssets(collectionsIdentifiers);
 
-    const nftCollections: NftCollection[] = await this.applyPropertiesToCollections(collectionsIdentifiers);
+    const nftCollections: NftCollection[] = [];
 
-    for (const nftCollection of nftCollections) {
-      const indexedCollection = indexedCollections[nftCollection.collection];
-      if (!indexedCollection) {
-        continue;
-      }
+    for (const esCollection of tokenCollections) {
+      const identifierParts = esCollection.token.split('-');
+      const ticker = identifierParts[0];
+      const collectionBase = identifierParts.slice(0, 2).join('-');
+      const assets = collectionsAssets[esCollection.token];
+      const props = esCollection.properties;
 
-      this.applyPropertiesToCollectionFromElasticSearch(nftCollection, indexedCollection);
+      const isMetaDCDT = esCollection.type === ElasticNftType.MetaDCDT || esCollection.type === ElasticNftType.DynamicMetaDCDT;
+
+      const nftCollection = new NftCollection({
+        name: esCollection.name,
+        collection: collectionBase,
+        ticker: ticker,
+        owner: esCollection.currentOwner,
+        assets: assets,
+        canFreeze: props?.canFreeze,
+        canWipe: props?.canWipe,
+        canPause: props?.canPause,
+        canTransferNftCreateRole: props?.canTransferNFTCreateRole,
+        canChangeOwner: props?.canChangeOwner,
+        canUpgrade: props?.canUpgrade,
+        canAddSpecialRoles: props?.canAddSpecialRoles,
+        decimals: isMetaDCDT ? esCollection.numDecimals : undefined,
+      });
+
+      nftCollection.ticker = nftCollection.assets ? ticker : nftCollection.collection;
+
+      // Apply additional ES fields (type, timestamp, counts, scamInfo)
+      this.applyPropertiesToCollectionFromElasticSearch(nftCollection, esCollection);
+
+      nftCollections.push(nftCollection);
     }
 
     return nftCollections;
@@ -101,7 +155,7 @@ export class CollectionService {
     nftCollection.subType = indexedCollection.type as NftSubType;
     nftCollection.timestamp = indexedCollection.timestamp;
 
-    if (nftCollection.type.in(NftType.NonFungibleDCDT, NftType.SemiFungibleDCDT)) {
+    if (nftCollection.type.in(NftType.NonFungibleDCDT, NftType.SemiFungibleDCDT, NftType.MetaDCDT)) {
       nftCollection.isVerified = indexedCollection.api_isVerified;
       nftCollection.nftCount = indexedCollection.api_nftCount;
       nftCollection.holderCount = indexedCollection.api_holderCount;
@@ -115,10 +169,17 @@ export class CollectionService {
     }
   }
 
+  async buildCollectionsFromElasticData(esCollections: Collection[]): Promise<NftCollection[]> {
+    return await this.processNftCollections(esCollections);
+  }
+
   async applyPropertiesToCollections(collectionsIdentifiers: string[]): Promise<NftCollection[]> {
     const nftCollections: NftCollection[] = [];
-    const collectionsProperties = await this.batchGetCollectionsProperties(collectionsIdentifiers);
-    const collectionsAssets = await this.batchGetCollectionsAssets(collectionsIdentifiers);
+
+    const [collectionsProperties, collectionsAssets] = await Promise.all([
+      this.batchGetCollectionsProperties(collectionsIdentifiers),
+      this.batchGetCollectionsAssets(collectionsIdentifiers),
+    ]);
 
     for (const collectionIdentifier of collectionsIdentifiers) {
       const collectionProperties = collectionsProperties[collectionIdentifier];
@@ -126,27 +187,29 @@ export class CollectionService {
         continue;
       }
 
-      const nftCollection = new NftCollection();
+      const identifierParts = collectionIdentifier.split('-');
+      const ticker = identifierParts[0];
+      const collectionBase = identifierParts.slice(0, 2).join('-');
+      const assets = collectionsAssets[collectionIdentifier];
 
-      // @ts-ignore
-      nftCollection.type = collectionProperties.type;
-      nftCollection.name = collectionProperties.name;
-      nftCollection.collection = collectionIdentifier.split('-').slice(0, 2).join('-');
-      nftCollection.ticker = collectionIdentifier.split('-')[0];
-      nftCollection.canFreeze = collectionProperties.canFreeze;
-      nftCollection.canWipe = collectionProperties.canWipe;
-      nftCollection.canPause = collectionProperties.canPause;
-      nftCollection.canTransferNftCreateRole = collectionProperties.canTransferNFTCreateRole;
-      nftCollection.canChangeOwner = collectionProperties.canChangeOwner;
-      nftCollection.canUpgrade = collectionProperties.canUpgrade;
-      nftCollection.canAddSpecialRoles = collectionProperties.canAddSpecialRoles;
-      nftCollection.owner = collectionProperties.owner;
+      const nftCollection = new NftCollection({
+        // @ts-ignore
+        type: collectionProperties.type,
+        name: collectionProperties.name,
+        collection: collectionBase,
+        ticker: ticker,
+        canFreeze: collectionProperties.canFreeze,
+        canWipe: collectionProperties.canWipe,
+        canPause: collectionProperties.canPause,
+        canTransferNftCreateRole: collectionProperties.canTransferNFTCreateRole,
+        canChangeOwner: collectionProperties.canChangeOwner,
+        canUpgrade: collectionProperties.canUpgrade,
+        canAddSpecialRoles: collectionProperties.canAddSpecialRoles,
+        owner: collectionProperties.owner,
+        assets: assets,
+        decimals: (collectionProperties.type as any) === NftType.MetaDCDT ? collectionProperties.decimals : undefined,
+      });
 
-      if (nftCollection.type === NftType.MetaDCDT) {
-        nftCollection.decimals = collectionProperties.decimals;
-      }
-
-      nftCollection.assets = collectionsAssets[collectionIdentifier];
       nftCollection.ticker = nftCollection.assets ? collectionIdentifier.split('-')[0] : nftCollection.collection;
 
       nftCollections.push(nftCollection);
@@ -156,28 +219,60 @@ export class CollectionService {
   }
 
   async batchGetCollectionsProperties(identifiers: string[]): Promise<{ [key: string]: TokenProperties | undefined }> {
-    if (this.apiConfigService.getCollectionPropertiesFromGateway()) {
-      return await this.getCollectionProperties(identifiers);
+    const result: { [key: string]: TokenProperties | undefined } = {};
+    const chunks = this.splitIntoChunks(identifiers, 300);
+
+    const chunkResults = await ConcurrencyUtils.executeWithConcurrencyLimit(
+      chunks,
+      async (chunk) => {
+        if (this.apiConfigService.getCollectionPropertiesFromGateway()) {
+          return await this.getCollectionProperties(chunk);
+        }
+        return await this.getDcdtProperties(chunk);
+      },
+      4,
+      'CollectionService.batchGetCollectionsProperties'
+    );
+
+    for (const chunkResult of chunkResults) {
+      Object.assign(result, chunkResult);
     }
 
-    return await this.getDcdtProperties(identifiers);
+    return result;
   }
 
   async batchGetCollectionsAssets(identifiers: string[]): Promise<{ [key: string]: TokenAssets | undefined }> {
     const collectionsAssets: { [key: string]: TokenAssets | undefined } = {};
+    const allAssets = await this.assetsService.getAllTokenAssets();
+    const chunks = this.splitIntoChunks(identifiers, 300);
 
-    await this.cachingService.batchApplyAll(
-      identifiers,
-      identifier => CacheInfo.DcdtAssets(identifier).key,
-      identifier => this.assetsService.getTokenAssets(identifier),
-      (identifier, properties) => collectionsAssets[identifier] = properties,
-      CacheInfo.DcdtAssets('').ttl
+    await ConcurrencyUtils.executeWithConcurrencyLimit(
+      chunks,
+      async (chunk) => {
+        await this.cachingService.batchApplyAll(
+          chunk,
+          identifier => CacheInfo.DcdtAssets(identifier).key,
+          identifier => Promise.resolve(allAssets[identifier]),
+          (identifier, properties) => collectionsAssets[identifier] = properties,
+          CacheInfo.DcdtAssets('').ttl
+        );
+      },
+      4,
+      'CollectionService.batchGetCollectionsAssets'
     );
 
     return collectionsAssets;
   }
 
   async getNftCollectionCount(filter: CollectionFilter): Promise<number> {
+    if (this.isCacheableCollectionFilter(filter)) {
+      return await this.cachingService.getOrSet(
+        CacheInfo.CollectionsCount.key,
+        async () => await this.indexerService.getNftCollectionCount(filter),
+        CacheInfo.CollectionsCount.ttl,
+      );
+    }
+
     return await this.indexerService.getNftCollectionCount(filter);
   }
 
@@ -196,7 +291,11 @@ export class CollectionService {
       return undefined;
     }
 
-    return await this.assetsService.getCollectionRanks(identifier);
+    return await this.cachingService.getOrSet(
+      CacheInfo.CollectionRanksForIdentifier(identifier).key,
+      async () => await this.assetsService.getCollectionRanks(identifier),
+      CacheInfo.CollectionRanksForIdentifier(identifier).ttl,
+    );
   }
 
   async getNftCollection(identifier: string): Promise<NftCollectionDetailed | undefined> {
@@ -213,19 +312,15 @@ export class CollectionService {
       return undefined;
     }
 
-    const [collection] = await this.applyPropertiesToCollections([identifier]);
+    const [collection] = await this.buildCollectionsFromElasticData([elasticCollection]);
 
     if (!collection) {
       return undefined;
     }
 
     const collectionDetailed = ApiUtils.mergeObjects(new NftCollectionDetailed(), collection);
-    collectionDetailed.type = elasticCollection.type as NftType;
-    collectionDetailed.timestamp = elasticCollection.timestamp;
 
-    this.applyPropertiesToCollectionFromElasticSearch(collectionDetailed, elasticCollection);
-
-    collectionDetailed.traits = await this.persistenceService.getCollectionTraits(identifier) ?? [];
+    collectionDetailed.traits = await this.getCollectionTraitsCached(identifier);
 
     await this.applyCollectionRoles(collectionDetailed, elasticCollection);
 
@@ -233,7 +328,7 @@ export class CollectionService {
   }
 
   async applyCollectionRoles(collection: NftCollectionDetailed | TokenDetailed, elasticCollection: any) {
-    collection.roles = await this.getNftCollectionRolesFromGateway(elasticCollection);
+    collection.roles = await this.getCollectionRolesCached(elasticCollection.token, elasticCollection);
     const isTransferProhibitedByDefault = collection.roles?.some(x => x.canTransfer === true) === true;
     collection.canTransfer = !isTransferProhibitedByDefault;
     if (collection.canTransfer) {
@@ -325,8 +420,19 @@ export class CollectionService {
   }
 
   async getCollectionCountForAddress(address: string, filter: CollectionFilter): Promise<number> {
-    const collections = await this.getCollectionsForAddress(address, filter, new QueryPagination({ from: 0, size: 10000 }));
+    if (this.isDefaultAddressCollectionFilter(filter)) {
+      return await this.cachingService.getOrSet(
+        CacheInfo.CollectionCountForAddress(address).key,
+        () => this.computeCollectionCountForAddress(address, filter),
+        CacheInfo.CollectionCountForAddress(address).ttl,
+      );
+    }
 
+    return await this.computeCollectionCountForAddress(address, filter);
+  }
+
+  private async computeCollectionCountForAddress(address: string, filter: CollectionFilter): Promise<number> {
+    const collections = await this.getCollectionsForAddress(address, filter, new QueryPagination({ from: 0, size: 10000 }));
     return collections.length;
   }
 
@@ -346,25 +452,63 @@ export class CollectionService {
   }
 
   async getCollectionsForAddress(address: string, filter: CollectionFilter, pagination: QueryPagination): Promise<NftCollectionAccount[]> {
+    if (this.isDefaultAddressCollectionFilter(filter)) {
+      const cacheInfo = CacheInfo.CollectionsForAddress(address, pagination);
+      return await this.cachingService.getOrSet(
+        cacheInfo.key,
+        () => this.fetchCollectionsForAddress(address, filter, pagination),
+        cacheInfo.ttl,
+      );
+    }
+
+    return await this.fetchCollectionsForAddress(address, filter, pagination);
+  }
+
+  private async fetchCollectionsForAddress(address: string, filter: CollectionFilter, pagination: QueryPagination): Promise<NftCollectionAccount[]> {
     const collectionsRaw = await this.indexerService.getCollectionsForAddress(address, filter, pagination);
 
-    const collections = await this.getNftCollections(
-      new QueryPagination({ from: 0, size: collectionsRaw.length }),
-      new CollectionFilter({ identifiers: collectionsRaw.map((x: any) => x.collection) })
-    );
-    const accountCollections = collections.map(collection => ApiUtils.mergeObjects(new NftCollectionAccount(), collection));
+    if (collectionsRaw.length === 0) {
+      return [];
+    }
 
-    for (const collection of accountCollections) {
-      const item = collectionsRaw.find(x => x.collection === collection.collection);
-      if (item) {
-        collection.count = item.count;
+    const identifiers = collectionsRaw.map((x: any) => x.collection);
+    const collections = await this.getNftCollectionsByIds(identifiers);
+
+    const collectionMap = new Map<string, NftCollection>();
+    for (const collection of collections) {
+      collectionMap.set(collection.collection, collection);
+    }
+
+    const accountCollections: NftCollectionAccount[] = [];
+    for (const raw of collectionsRaw) {
+      const collection = collectionMap.get(raw.collection);
+      if (collection) {
+        const accountCollection = ApiUtils.mergeObjects(new NftCollectionAccount(), collection);
+        accountCollection.count = raw.count;
+        accountCollections.push(accountCollection);
       }
     }
 
     return accountCollections;
   }
 
+  private isDefaultAddressCollectionFilter(filter: CollectionFilter): boolean {
+    return !filter.search &&
+      !(filter.type && filter.type.length > 0) &&
+      !(filter.subType && filter.subType.length > 0) &&
+      !filter.excludeMetaDCDT &&
+      !filter.collection;
+  }
+
   async getCollectionCountForAddressWithRoles(address: string, filter: CollectionFilter): Promise<number> {
+    if (this.isDefaultAddressCollectionFilter(filter)) {
+      return await this.cachingService.getOrSet(
+        CacheInfo.CollectionRolesCountForAddress(address).key,
+        () => this.dcdtAddressService.getCollectionCountForAddressFromElastic(address, filter),
+        CacheInfo.CollectionRolesCountForAddress(address).ttl,
+      );
+    }
+
     return await this.dcdtAddressService.getCollectionCountForAddressFromElastic(address, filter);
   }
 
@@ -378,7 +522,7 @@ export class CollectionService {
   }
 
   async getLogoPng(identifier: string): Promise<string | undefined> {
-    const collectionLogo = await this.getCollectionLogo(identifier);
+    const collectionLogo = await this.getCollectionLogoCached(identifier);
     if (!collectionLogo) {
       return;
     }
@@ -387,7 +531,7 @@ export class CollectionService {
   }
 
   async getLogoSvg(identifier: string): Promise<string | undefined> {
-    const collectionLogo = await this.getCollectionLogo(identifier);
+    const collectionLogo = await this.getCollectionLogoCached(identifier);
     if (!collectionLogo) {
       return;
     }
@@ -421,5 +565,41 @@ export class CollectionService {
     );
 
     return collectionsProperties;
+  }
+
+  private splitIntoChunks<T>(items: T[], chunkSize: number): T[][] {
+    if (chunkSize <= 0) {
+      return [items];
+    }
+
+    const chunks: T[][] = [];
+    for (let i = 0; i < items.length; i += chunkSize) {
+      chunks.push(items.slice(i, i + chunkSize));
+    }
+    return chunks;
+  }
+
+  private async getCollectionTraitsCached(identifier: string): Promise<any[]> {
+    return await this.cachingService.getOrSet(
+      CacheInfo.CollectionTraits(identifier).key,
+      async () => await this.persistenceService.getCollectionTraits(identifier) ?? [],
+      CacheInfo.CollectionTraits(identifier).ttl,
+    );
+  }
+
+  private async getCollectionRolesCached(identifier: string, elasticCollection: any): Promise<CollectionRoles[]> {
+    return await this.cachingService.getOrSet(
+      CacheInfo.CollectionRoles(identifier).key,
+      async () => await this.getNftCollectionRolesFromGateway(elasticCollection),
+      CacheInfo.CollectionRoles(identifier).ttl,
+    );
+  }
+
+  private async getCollectionLogoCached(identifier: string): Promise<CollectionLogo | undefined> {
+    return await this.cachingService.getOrSet(
+      CacheInfo.CollectionLogo(identifier).key,
+      async () => await this.getCollectionLogo(identifier),
+      CacheInfo.CollectionLogo(identifier).ttl,
+    );
   }
 }

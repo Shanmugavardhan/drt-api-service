@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DynamicModuleUtils } from 'src/utils/dynamic.module.utils';
 import { PubSubListenerController } from './pub.sub.listener.controller';
-import { LoggingModule } from '@terradharitri/sdk-nestjs-common';
+import { LoggingModule } from '@sravankumar02/sdk-nestjs-common';
 
 @Module({
   imports: [

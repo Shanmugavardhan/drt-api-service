@@ -13,7 +13,7 @@ describe('Accounts e2e tests with chain simulator', () => {
     });
 
     it('should filter accounts by owner address', async () => {
-      const address = 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2';
+      const address = 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez';
       const response = await axios.get(`${config.apiServiceUrl}/accounts?ownerAddress=${address}`);
       expect(response.status).toBe(200);
 
@@ -71,7 +71,7 @@ describe('Accounts e2e tests with chain simulator', () => {
     });
 
     it('should filter accounts by owner address', async () => {
-      const ownerAddress = 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2';
+      const ownerAddress = 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez';
       const response = await axios.get(`${config.apiServiceUrl}/accounts/count?ownerAddress=${ownerAddress}`);
       expect(response.status).toBe(200);
       expect(response.data).toBe(1);
@@ -92,7 +92,7 @@ describe('Accounts e2e tests with chain simulator', () => {
     });
 
     it('should filter accounts by owner address', async () => {
-      const ownerAddress = 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2';
+      const ownerAddress = 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez';
       const response = await axios.get(`${config.apiServiceUrl}/accounts/c?ownerAddress=${ownerAddress}`);
       expect(response.status).toBe(200);
       expect(response.data).toBe(1);
@@ -958,7 +958,7 @@ describe('Accounts e2e tests with chain simulator', () => {
     });
 
     it('should return transactions with receiver parameter', async () => {
-      const receiverAddress = 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2';
+      const receiverAddress = 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez';
       const response = await axios.get(`${config.apiServiceUrl}/accounts/${config.aliceAddress}/transactions?receiver=${receiverAddress}`);
       expect(response.status).toBe(200);
       expect(response.data.length).toBeGreaterThanOrEqual(1);
@@ -1108,7 +1108,7 @@ describe('Accounts e2e tests with chain simulator', () => {
     });
 
     it('should return the total number of transactions for a given address with receiver parameter', async () => {
-      const receiverAddress = 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2';
+      const receiverAddress = 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez';
       const response = await axios.get(`${config.apiServiceUrl}/accounts/${config.aliceAddress}/transactions/count?receiver=${receiverAddress}`);
       expect(response.status).toBe(200);
       expect(typeof response.data).toBe('number');
@@ -1219,7 +1219,7 @@ describe('Accounts e2e tests with chain simulator', () => {
     });
 
     it('should return transfers with receiver parameter', async () => {
-      const receiverAddress = 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2';
+      const receiverAddress = 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez';
       const response = await axios.get(`${config.apiServiceUrl}/accounts/${config.aliceAddress}/transfers?receiver=${receiverAddress}`);
       expect(response.status).toBe(200);
       expect(response.data.length).toBeGreaterThanOrEqual(1);

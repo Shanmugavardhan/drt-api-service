@@ -1,5 +1,5 @@
-import { JwtAdminGuard, NativeAuthGuard } from "@terradharitri/sdk-nestjs-auth";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { JwtAdminGuard, NativeAuthGuard } from "@sravankumar02/sdk-nestjs-auth";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Put, UseGuards } from "@nestjs/common";
 import { ApiExcludeController, ApiResponse } from "@nestjs/swagger";
 import { CacheValue } from "./entities/cache.value";
@@ -50,7 +50,7 @@ export class LocalCacheController {
     status: 404,
     description: 'Key not found',
   })
-  async delCache(@Param('key') key: string) {
-    await this.cachingService.deleteLocal(key);
+  delCache(@Param('key') key: string) {
+    this.cachingService.deleteLocal(key);
   }
 }

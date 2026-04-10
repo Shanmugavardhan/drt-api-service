@@ -1,5 +1,5 @@
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 
 export class CachingUtils {
   static async executeOptimistic<T>(param: { cachingService: CacheService, description: string, key: string, ttl: number, action: () => Promise<T> }): Promise<T | undefined> {

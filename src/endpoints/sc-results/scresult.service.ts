@@ -1,4 +1,4 @@
-import { ApiUtils } from "@terradharitri/sdk-nestjs-http";
+import { ApiUtils } from "@sravankumar02/sdk-nestjs-http";
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { AssetsService } from "src/common/assets/assets.service";
 import { QueryPagination } from "src/common/entities/query.pagination";
@@ -8,7 +8,7 @@ import { TransactionType } from "../transactions/entities/transaction.type";
 import { TransactionActionService } from "../transactions/transaction-action/transaction.action.service";
 import { SmartContractResult } from "./entities/smart.contract.result";
 import { SmartContractResultFilter } from "./entities/smart.contract.result.filter";
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { SmartContractResultOptions } from "./entities/smart.contract.result.options";
 
 @Injectable()

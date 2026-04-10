@@ -1,4 +1,4 @@
-import { AddressUtils, BinaryUtils, OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { AddressUtils, BinaryUtils, OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { ShardTransaction } from "@terradharitri/sdk-transaction-processor";
 import { Logger } from "@nestjs/common";
 import { TransactionDetailed } from "src/endpoints/transactions/entities/transaction.detailed";

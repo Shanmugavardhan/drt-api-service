@@ -1,4 +1,4 @@
-import { ComplexityEstimation } from "@terradharitri/sdk-nestjs-common";
+import { ComplexityEstimation } from "@sravankumar02/sdk-nestjs-common";
 import { ApiProperty } from "@nestjs/swagger";
 import { ScamInfo } from "src/common/entities/scam-info.dto";
 import { NftCollectionAccount } from "src/endpoints/collections/entities/nft.collection.account";

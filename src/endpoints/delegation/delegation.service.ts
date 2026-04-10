@@ -3,9 +3,9 @@ import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { VmQueryService } from "src/endpoints/vm.query/vm.query.service";
 import { Delegation } from "./entities/delegation";
 import { NodeService } from "../nodes/node.service";
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
-import { ApiService } from "@terradharitri/sdk-nestjs-http";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
+import { ApiService } from "@sravankumar02/sdk-nestjs-http";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { CacheInfo } from "src/utils/cache.info";
 import { AccountDelegation } from "../stake/entities/account.delegation";
 
@@ -71,7 +71,11 @@ export class DelegationService {
   async getDelegationForAddress(address: string): Promise<AccountDelegation[]> {
     try {
       const { data } = await this.apiService.get(`${this.apiConfigService.getDelegationUrl()}/accounts/${address}/delegations`);
-      return data;
+
+      return data.map((delegation: any) => new AccountDelegation({
+        ...delegation,
+        userUndelegatedList: delegation.userUndelegatedList ?? [],
+      }));
     } catch (error) {
       this.logger.error(`Error when getting account delegation details for address ${address}`);
       this.logger.error(error);

@@ -1,5 +1,5 @@
-import { ApiService } from "@terradharitri/sdk-nestjs-http";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { ApiService } from "@sravankumar02/sdk-nestjs-http";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Test } from "@nestjs/testing";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { DelegationService } from "src/endpoints/delegation/delegation.service";
@@ -90,7 +90,7 @@ describe('Delegation Service', () => {
         instances: 1,
         owner: "drt1kz2kumr0clug4ht2ek0l4l9drvq3rne9lmkwrjf3qv2luyuuaj2slwe0vh",
         identity: "thepalmtreenw",
-        provider: "drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqy8llllssrzx6z",
+        provider: "drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqy8lllls8knyn2",
         stake: "1000",
         topUp: "1000",
         locked: "1000",
@@ -145,7 +145,7 @@ describe('Delegation Service', () => {
 
       jest.spyOn(delegationService['vmQueryService'], 'vmQuery').mockResolvedValueOnce(['someBase64Config']);
       jest.spyOn(delegationService['nodeService'], 'getAllNodes').mockResolvedValueOnce(mockNodes);
-      jest.spyOn(delegationService['apiConfigService'], 'getDelegationManagerContractAddress').mockReturnValue('drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqyllls4jxmwv');
+      jest.spyOn(delegationService['apiConfigService'], 'getDelegationManagerContractAddress').mockReturnValue('drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllsz8he8y');
 
       const result = await delegationService.getDelegationRaw();
 
@@ -178,7 +178,7 @@ describe('Delegation Service', () => {
 
       jest.spyOn(delegationService['vmQueryService'], 'vmQuery').mockResolvedValueOnce(['someBase64Config']);
       jest.spyOn(delegationService['nodeService'], 'getAllNodes').mockResolvedValueOnce([]);
-      jest.spyOn(delegationService['apiConfigService'], 'getDelegationManagerContractAddress').mockReturnValue('drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqyllls4jxmwv');
+      jest.spyOn(delegationService['apiConfigService'], 'getDelegationManagerContractAddress').mockReturnValue('drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllsz8he8y');
 
       const result = await delegationService.getDelegationRaw();
 
@@ -217,6 +217,60 @@ describe('Delegation Service', () => {
         "Error when getting account delegation details for address drt1qga7ze0l03chfgru0a32wxqf2226nzrxnyhzer9lmudqhjgy7ycq0wn4su");
 
       await expect(delegationService.getDelegationForAddress(mockAddress)).rejects.toThrow(mockError);
+      expect(mockGetFn).toHaveBeenCalledWith(`${apiConfigService.getDelegationUrl()}/accounts/${mockAddress}/delegations`);
+    });
+
+    it('should initialize empty userUndelegatedList when the field is missing from external API response', async () => {
+      const mockResponseWithMissingField = [
+        {
+          address: 'drt1qga7ze0l03chfgru0a32wxqf2226nzrxnyhzer9lmudqhjgy7ycq0wn4su',
+          contract: 'drt1qqqqqqqqqqqqqqqqqqqqqqqqqq6nzrxnyhzer9lmudqhjgy7ycqjjyknz',
+          userUnBondable: '1000000000000000000',
+          userActiveStake: '0',
+          claimableRewards: '0',
+        },
+      ];
+
+      const expectedResult = [
+        {
+          address: 'drt1qga7ze0l03chfgru0a32wxqf2226nzrxnyhzer9lmudqhjgy7ycq0wn4su',
+          contract: 'drt1qqqqqqqqqqqqqqqqqqqqqqqqqq6nzrxnyhzer9lmudqhjgy7ycqjjyknz',
+          userUnBondable: '1000000000000000000',
+          userActiveStake: '0',
+          claimableRewards: '0',
+          userUndelegatedList: [],
+        },
+      ];
+
+      const mockGetFn = jest.fn().mockResolvedValue({ data: mockResponseWithMissingField });
+      jest.spyOn(apiService, 'get').mockImplementation(mockGetFn);
+
+      const result = await delegationService.getDelegationForAddress(mockAddress);
+
+      expect(result).toEqual(expectedResult);
+      expect(result[0].userUndelegatedList).toEqual([]);
+      expect(mockGetFn).toHaveBeenCalledWith(`${apiConfigService.getDelegationUrl()}/accounts/${mockAddress}/delegations`);
+    });
+
+    it('should preserve explicitly returned empty userUndelegatedList arrays from external API', async () => {
+      const mockResponseWithExplicitEmptyArray = [
+        {
+          address: 'drt1qga7ze0l03chfgru0a32wxqf2226nzrxnyhzer9lmudqhjgy7ycq0wn4su',
+          contract: 'drt1qqqqqqqqqqqqqqqqqqqqqqqqqq6nzrxnyhzer9lmudqhjgy7ycqjjyknz',
+          userUnBondable: '1000000000000000000',
+          userActiveStake: '0',
+          claimableRewards: '0',
+          userUndelegatedList: [],
+        },
+      ];
+
+      const mockGetFn = jest.fn().mockResolvedValue({ data: mockResponseWithExplicitEmptyArray });
+      jest.spyOn(apiService, 'get').mockImplementation(mockGetFn);
+
+      const result = await delegationService.getDelegationForAddress(mockAddress);
+
+      expect(result).toEqual(mockResponseWithExplicitEmptyArray);
+      expect(result[0].userUndelegatedList).toEqual([]);
       expect(mockGetFn).toHaveBeenCalledWith(`${apiConfigService.getDelegationUrl()}/accounts/${mockAddress}/delegations`);
     });
   });

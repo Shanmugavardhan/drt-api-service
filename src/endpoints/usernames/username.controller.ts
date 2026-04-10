@@ -2,8 +2,8 @@ import { AccountUsername } from './entities/account.username';
 import { Controller, Get, HttpException, HttpStatus, Param, Query, Res } from "@nestjs/common";
 import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { UsernameService } from "./username.service";
-import { NoCache } from '@terradharitri/sdk-nestjs-cache';
-import { ParseBoolPipe } from '@terradharitri/sdk-nestjs-common';
+import { NoCache } from '@sravankumar02/sdk-nestjs-cache';
+import { ParseBoolPipe } from '@sravankumar02/sdk-nestjs-common';
 import { AccountDetailed } from '../accounts/entities/account.detailed';
 
 @Controller()

@@ -7,7 +7,7 @@ import { MoaSettings } from "../../../../moa/entities/moa.settings";
 import { TokenTransferService } from "src/endpoints/tokens/token.transfer.service";
 import { MoaSettingsService } from "../../../../moa/moa.settings.service";
 import { TransactionActionDcdtNftRecognizerService } from "../dcdt/transaction.action.dcdt.nft.recognizer.service";
-import { BinaryUtils, NumberUtils } from "@terradharitri/sdk-nestjs-common";
+import { BinaryUtils, NumberUtils } from "@sravankumar02/sdk-nestjs-common";
 
 @Injectable()
 export class MoaPairActionRecognizerService {

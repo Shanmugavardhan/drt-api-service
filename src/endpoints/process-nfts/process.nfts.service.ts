@@ -1,5 +1,5 @@
-import { AddressUtils } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { AddressUtils } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Injectable } from "@nestjs/common";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { CacheInfo } from "src/utils/cache.info";
@@ -11,7 +11,7 @@ import { Nft } from "../nfts/entities/nft";
 import { NftService } from "../nfts/nft.service";
 import { ProcessNftRequest } from "./entities/process.nft.request";
 import { ProcessNftSettings } from "./entities/process.nft.settings";
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 
 @Injectable()
 export class ProcessNftsService {
@@ -97,6 +97,9 @@ export class ProcessNftsService {
   }
 
   private async isCollectionOwner(address: string, collection: string): Promise<boolean> {
+    if (this.apiConfigService.getSecurityAdmins().includes(address)) {
+      return true;
+    }
     const collectionOwner = await this.getCollectionNonScOwner(collection);
 
     return address === collectionOwner;

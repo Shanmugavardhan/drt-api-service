@@ -1,5 +1,5 @@
-import { OriginLogger, MatchUtils } from "@terradharitri/sdk-nestjs-common";
-import { ApiUtils, ApiService } from "@terradharitri/sdk-nestjs-http";
+import { OriginLogger, MatchUtils } from "@sravankumar02/sdk-nestjs-common";
+import { ApiUtils, ApiService } from "@sravankumar02/sdk-nestjs-http";
 import { Injectable } from "@nestjs/common";
 import { NftMetadata } from "src/endpoints/nfts/entities/nft.metadata";
 import { TokenHelpers } from "src/utils/token.helpers";

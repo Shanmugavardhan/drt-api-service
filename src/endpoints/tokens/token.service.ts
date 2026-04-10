@@ -19,11 +19,12 @@ import { SortOrder } from "src/common/entities/sort.order";
 import { TokenSort } from "./entities/token.sort";
 import { TokenWithRoles } from "./entities/token.with.roles";
 import { TokenWithRolesFilter } from "./entities/token.with.roles.filter";
-import { AddressUtils, BinaryUtils, NumberUtils, TokenUtils } from "@terradharitri/sdk-nestjs-common";
-import { ApiService, ApiUtils } from "@terradharitri/sdk-nestjs-http";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { AddressUtils, BinaryUtils, NumberUtils, TokenUtils } from "@sravankumar02/sdk-nestjs-common";
+import { ApiService, ApiUtils } from "@sravankumar02/sdk-nestjs-http";
+import { ConcurrencyUtils } from "src/utils/concurrency.utils";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { IndexerService } from "src/common/indexer/indexer.service";
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { TokenLogo } from "./entities/token.logo";
 import { AssetsService } from "src/common/assets/assets.service";
 import { CacheInfo } from "src/utils/cache.info";
@@ -49,6 +50,7 @@ export class TokenService {
   private readonly logger = new OriginLogger(TokenService.name);
   private readonly nftSubTypes = [NftSubType.DynamicNonFungibleDCDT, NftSubType.DynamicMetaDCDT, NftSubType.NonFungibleDCDTv2, NftSubType.DynamicSemiFungibleDCDT];
   private readonly rewaIdentifierInMultiTransfer = 'REWA-000000';
+  private readonly thresholdFaultyMarketCap = 10_000_000_000;
 
   constructor(
     private readonly dcdtService: DcdtService,
@@ -93,16 +95,19 @@ export class TokenService {
 
     this.applyTickerFromAssets(token);
 
-    await this.applySupply(token, supplyOptions);
-
-    if (token.type === TokenType.FungibleDCDT) {
-      token.roles = await this.getTokenRoles(identifier);
-    } else if (token.type === TokenType.MetaDCDT) {
-      const elasticCollection = await this.indexerService.getCollection(identifier);
-      if (elasticCollection) {
-        await this.collectionService.applyCollectionRoles(token, elasticCollection);
-      }
-    }
+    await Promise.all([
+      this.applySupply(token, supplyOptions),
+      (async () => {
+        if (token.type === TokenType.FungibleDCDT) {
+          token.roles = await this.getTokenRoles(identifier);
+        } else if (token.type === TokenType.MetaDCDT) {
+          const elasticCollection = await this.indexerService.getCollection(identifier);
+          if (elasticCollection) {
+            await this.collectionService.applyCollectionRoles(token, elasticCollection);
+          }
+        }
+      })(),
+    ]);
 
     return token;
   }
@@ -733,7 +738,7 @@ export class TokenService {
 
     const tokens = await this.getAllTokens();
     for (const token of tokens) {
-      if (token.price && token.marketCap && !token.isLowLiquidity) {
+      if (token.price && token.marketCap && !token.isLowLiquidity && token.assets?.priceSource?.type !== TokenAssetsPriceSourceType.customUrl) {
         totalMarketCap += token.marketCap;
       }
     }
@@ -755,13 +760,15 @@ export class TokenService {
     }
 
     this.logger.log(`Starting to fetch all tokens`);
+    const startFungible = Date.now();
     const tokensProperties = await this.dcdtService.getAllFungibleTokenProperties();
     let tokens = tokensProperties.map(properties => ApiUtils.mergeObjects(new TokenDetailed(), properties));
+    this.logger.log(`Fetched ${tokens.length} fungible tokens in ${Date.now() - startFungible}ms`);
 
-    this.logger.log(`Fetched ${tokens.length} fungible tokens`);
+    const allAssets = await this.assetsService.getAllTokenAssets();
 
     for (const token of tokens) {
-      const assets = await this.assetsService.getTokenAssets(token.identifier);
+      const assets = allAssets[token.identifier];
 
       if (assets && assets.name) {
         token.name = assets.name;
@@ -771,10 +778,7 @@ export class TokenService {
     }
 
     this.logger.log(`Starting to fetch all meta tokens`);
-
     const collections = await this.collectionService.getNftCollections(new QueryPagination({ from: 0, size: 10000 }), { type: [NftType.MetaDCDT] });
-
-    this.logger.log(`Fetched ${collections.length} meta tokens`);
 
     for (const collection of collections) {
       tokens.push(new TokenDetailed({
@@ -797,47 +801,81 @@ export class TokenService {
 
     await this.batchProcessTokens(tokens);
 
-    await this.applyMoaLiquidity(tokens.filter(x => x.type !== TokenType.MetaDCDT));
-    await this.applyMoaPrices(tokens.filter(x => x.type !== TokenType.MetaDCDT));
-    await this.applyMoaPairType(tokens.filter(x => x.type !== TokenType.MetaDCDT));
-    await this.applyMoaPairTradesCount(tokens.filter(x => x.type !== TokenType.MetaDCDT));
+    const nonMetaDcdtTokens = tokens.filter(x => x.type !== TokenType.MetaDCDT);
+    this.logger.log(`Applying MOA data for ${nonMetaDcdtTokens.length} non-meta tokens`);
 
+    await Promise.all([
+      this.applyMoaLiquidity(nonMetaDcdtTokens),
+      this.applyMoaPrices(nonMetaDcdtTokens),
+      this.applyMoaPairType(nonMetaDcdtTokens),
+      this.applyMoaPairTradesCount(nonMetaDcdtTokens),
+    ]);
+
+    this.logger.log(`Fetching assets for ${tokens.length} tokens`);
     await this.cachingService.batchApplyAll(
       tokens,
       token => CacheInfo.DcdtAssets(token.identifier).key,
       async token => await this.getTokenAssetsRaw(token.identifier),
       (token, assets) => token.assets = assets,
       CacheInfo.DcdtAssets('').ttl,
+      50,
     );
 
-    for (const token of tokens) {
-      const priceSourcetype = token.assets?.priceSource?.type;
+    this.logger.log(`Processing price sources and supply for ${tokens.length} tokens`);
+    await ConcurrencyUtils.executeWithConcurrencyLimit(
+      tokens,
+      async (token) => {
+        try {
+          const priceSourcetype = token.assets?.priceSource?.type;
 
-      if (priceSourcetype === TokenAssetsPriceSourceType.dataApi) {
-        token.price = await this.dataApiService.getDcdtTokenPrice(token.identifier);
-      } else if (priceSourcetype === TokenAssetsPriceSourceType.customUrl && token.assets?.priceSource?.url) {
-        const pathToPrice = token.assets?.priceSource?.path ?? "0.usdPrice";
-        const tokenData = await this.fetchTokenDataFromUrl(token.assets.priceSource.url, pathToPrice);
+          if (priceSourcetype === TokenAssetsPriceSourceType.dataApi) {
+            token.price = await this.dataApiService.getDcdtTokenPrice(token.identifier);
+          } else if (priceSourcetype === TokenAssetsPriceSourceType.customUrl && token.assets?.priceSource?.url) {
+            const pathToPrice = token.assets?.priceSource?.path ?? "0.usdPrice";
+            const customHeaders = this.apiConfigService.getHeadersForCustomUrl(token.assets.priceSource.url);
+            const tokenData = await this.fetchTokenDataFromUrl(token.assets.priceSource.url, pathToPrice, customHeaders);
 
-        if (tokenData) {
-          token.price = tokenData;
+            if (tokenData) {
+              token.price = tokenData;
+            }
+          }
+          if (!token.price && token.type === TokenType.FungibleDCDT) {
+            try {
+              const dataApiPrice = await this.dataApiService.getDcdtTokenPrice(token.identifier);
+              if (dataApiPrice) {
+                token.price = dataApiPrice;
+                this.logger.log(`Applied dataAPI fallback for ${token.identifier} token with price ${dataApiPrice}`);
+              }
+            } catch (error) {
+              this.logger.error(`Error applying dataAPI fallback price for token ${token.identifier}: ${error}`);
+            }
+          }
+
+          const supply = await this.dcdtService.getTokenSupply(token.identifier);
+          token.supply = supply.totalSupply;
+          token.circulatingSupply = supply.circulatingSupply;
+
+          if (token.price && token.circulatingSupply) {
+            token.marketCap = token.price * NumberUtils.denominateString(token.circulatingSupply, token.decimals);
+            // TODO: update this by checking the token's liquidity collateral
+            if (token.marketCap > this.thresholdFaultyMarketCap) {
+              this.logger.log(`Setting token market cap to 0 due to possibly faulty market cap. Token: ${token.identifier}. Circulating supply: ${token.circulatingSupply}. Price: ${token.price}. Market cap: ${token.marketCap}`);
+              token.marketCap = 0;
+            }
+          }
+        } catch (error) {
+          this.logger.error(`Error processing price/supply for token ${token.identifier}: ${error}`);
         }
-      }
+      },
+      50,
+      'Token prices and supply calculation'
+    );
 
-      if (token.price) {
-        const supply = await this.dcdtService.getTokenSupply(token.identifier);
-        token.supply = supply.totalSupply;
-        token.circulatingSupply = supply.circulatingSupply;
-
-        if (token.circulatingSupply) {
-          token.marketCap = token.price * NumberUtils.denominateString(token.circulatingSupply, token.decimals);
-        }
-      }
-    }
-
+    this.logger.log(`Sorting and finalizing ${tokens.length} tokens`);
     tokens = tokens.sortedDescending(
       token => token.assets ? 1 : 0,
-      token => token.isLowLiquidity ? 0 : (token.marketCap ?? 0),
+      token => token.marketCap ? 1 : 0,
+      token => token.isLowLiquidity || token.assets?.priceSource?.type === TokenAssetsPriceSourceType.customUrl ? 0 : (token.marketCap ?? 0),
       token => token.transactions ?? 0,
     );
 
@@ -855,6 +893,7 @@ export class TokenService {
     });
     tokens = [...tokens, rewaToken];
 
+    this.logger.log(`Total tokens processed: ${tokens.length}`);
     return tokens;
   }
 
@@ -873,9 +912,11 @@ export class TokenService {
     return result;
   }
 
-  private async fetchTokenDataFromUrl(url: string, path: string): Promise<any> {
+  private async fetchTokenDataFromUrl(url: string, path: string, customHeaders?: Record<string, string>): Promise<any> {
     try {
-      const result = await this.apiService.get(url);
+
+      this.logger.log(`Fetching token data from URL: ${url} with custom headers: ${JSON.stringify(customHeaders)}`);
+      const result = await this.apiService.get(url, customHeaders ? { headers: customHeaders } : undefined);
 
       if (!result || !result.data) {
         this.logger.error(`Invalid response received from URL: ${url}`);
@@ -917,41 +958,45 @@ export class TokenService {
   }
 
   private async batchProcessTokens(tokens: TokenDetailed[]) {
-    await this.cachingService.batchApplyAll(
-      tokens,
-      token => CacheInfo.TokenTransactions(token.identifier).key,
-      async token => await this.getTotalTransactions(token),
-      (token, result) => {
-        token.transactions = result?.count;
-        token.transactionsLastUpdatedAt = result?.lastUpdatedAt;
-      },
-      CacheInfo.TokenTransactions('').ttl,
-      10,
-    );
+    this.logger.log(`Starting batch process for ${tokens.length} tokens`);
 
-    await this.cachingService.batchApplyAll(
-      tokens,
-      token => CacheInfo.TokenAccounts(token.identifier).key,
-      async token => await this.getTotalAccounts(token),
-      (token, result) => {
-        token.accounts = result?.count;
-        token.accountsLastUpdatedAt = result?.lastUpdatedAt;
-      },
-      CacheInfo.TokenAccounts('').ttl,
-      10,
-    );
+    await Promise.all([
+      this.cachingService.batchApplyAll(
+        tokens,
+        token => CacheInfo.TokenTransactions(token.identifier).key,
+        async token => await this.getTotalTransactions(token),
+        (token, result) => {
+          token.transactions = result?.count;
+          token.transactionsLastUpdatedAt = result?.lastUpdatedAt;
+        },
+        CacheInfo.TokenTransactions('').ttl,
+        50,
+      ),
+      this.cachingService.batchApplyAll(
+        tokens,
+        token => CacheInfo.TokenAccounts(token.identifier).key,
+        async token => await this.getTotalAccounts(token),
+        (token, result) => {
+          token.accounts = result?.count;
+          token.accountsLastUpdatedAt = result?.lastUpdatedAt;
+        },
+        CacheInfo.TokenAccounts('').ttl,
+        50,
+      ),
+      this.cachingService.batchApplyAll(
+        tokens,
+        token => CacheInfo.TokenTransfers(token.identifier).key,
+        async token => await this.getTotalTransfers(token),
+        (token, result) => {
+          token.transfers = result?.count;
+          token.transfersLastUpdatedAt = result?.lastUpdatedAt;
+        },
+        CacheInfo.TokenTransfers('').ttl,
+        50,
+      ),
+    ]);
 
-    await this.cachingService.batchApplyAll(
-      tokens,
-      token => CacheInfo.TokenTransfers(token.identifier).key,
-      async token => await this.getTotalTransfers(token),
-      (token, result) => {
-        token.transfers = result?.count;
-        token.transfersLastUpdatedAt = result?.lastUpdatedAt;
-      },
-      CacheInfo.TokenTransfers('').ttl,
-      10,
-    );
+    this.logger.log(`Batch process for ${tokens.length} tokens finished`);
   }
 
   private async getAllTokensFromApi(): Promise<TokenDetailed[]> {
@@ -1037,29 +1082,49 @@ export class TokenService {
 
     try {
       const indexedTokens = await this.moaTokenService.getMoaPricesRaw();
-      for (const token of tokens) {
-        const price = indexedTokens[token.identifier];
-        if (price) {
-          const supply = await this.dcdtService.getTokenSupply(token.identifier);
 
-          if (token.assets && token.identifier.split('-')[0] === 'REWAUSDC') {
-            price.price = price.price / (10 ** 12) * 2;
-          }
+      const tokensWithPrices = tokens.filter(token => indexedTokens[token.identifier]);
 
-          if (price.isToken) {
-            token.price = price.price;
-            token.marketCap = price.price * NumberUtils.denominateString(supply.circulatingSupply, token.decimals);
+      this.logger.log(`Applying MOA prices for ${tokensWithPrices.length} tokens with parallel supply fetching`);
 
-            if (token.totalLiquidity && token.marketCap && (token.totalLiquidity / token.marketCap < LOW_LIQUIDITY_THRESHOLD)) {
-              token.isLowLiquidity = true;
-              token.lowLiquidityThresholdPercent = LOW_LIQUIDITY_THRESHOLD * 100;
+      await ConcurrencyUtils.executeWithConcurrencyLimit(
+        tokensWithPrices,
+        async (token) => {
+          try {
+            const price = indexedTokens[token.identifier];
+            if (!price) {
+              return;
             }
-          }
 
-          token.supply = supply.totalSupply;
-          token.circulatingSupply = supply.circulatingSupply;
-        }
-      }
+            const supply = await this.dcdtService.getTokenSupply(token.identifier);
+
+            if (token.assets && token.identifier.split('-')[0] === 'REWAUSDC') {
+              price.price = price.price / (10 ** 12) * 2;
+            }
+
+            if (price.isToken) {
+              token.price = price.price;
+              token.marketCap = price.price * NumberUtils.denominateString(supply.circulatingSupply, token.decimals);
+              if (token.marketCap > this.thresholdFaultyMarketCap) {
+                this.logger.log(`Setting token market cap to 0 due to possibly faulty market cap. Token: ${token.identifier}. Circulating supply: ${supply.circulatingSupply}. Price: ${token.price}. Market cap: ${token.marketCap}`);
+                token.marketCap = 0;
+              }
+
+              if (token.totalLiquidity && token.marketCap && (token.totalLiquidity / token.marketCap < LOW_LIQUIDITY_THRESHOLD)) {
+                token.isLowLiquidity = true;
+                token.lowLiquidityThresholdPercent = LOW_LIQUIDITY_THRESHOLD * 100;
+              }
+            }
+
+            token.supply = supply.totalSupply;
+            token.circulatingSupply = supply.circulatingSupply;
+          } catch (error) {
+            this.logger.error(`Error applying MOA price for token ${token.identifier}: ${error}`);
+          }
+        },
+        50,
+        'MOA prices and supply'
+      );
     } catch (error) {
       this.logger.error('Could not apply moa tokens prices');
       this.logger.error(error);

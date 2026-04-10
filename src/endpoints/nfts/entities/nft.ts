@@ -3,7 +3,7 @@ import { TokenAssets } from "src/common/assets/entities/token.assets";
 import { NftMedia } from "./nft.media";
 import { NftMetadata } from "./nft.metadata";
 import { NftType } from "./nft.type";
-import { ComplexityEstimation, SwaggerUtils } from "@terradharitri/sdk-nestjs-common";
+import { ComplexityEstimation, SwaggerUtils } from "@sravankumar02/sdk-nestjs-common";
 import { NftRarities } from "./nft.rarities";
 import { UnlockMileStoneModel } from "src/common/locked-asset/entities/unlock.milestone.model";
 import { ScamInfo } from "src/common/entities/scam-info.dto";

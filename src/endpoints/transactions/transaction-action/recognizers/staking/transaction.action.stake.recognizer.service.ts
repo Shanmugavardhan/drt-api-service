@@ -1,5 +1,5 @@
-import { BinaryUtils, Constants, NumberUtils } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { BinaryUtils, Constants, NumberUtils } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { IdentitiesService } from "src/endpoints/identities/identities.service";
 import { ProviderService } from "src/endpoints/providers/provider.service";
@@ -20,7 +20,7 @@ export class StakeActionRecognizerService implements TransactionActionRecognizer
   ) { }
 
   private async getProviders(): Promise<{ [key: string]: { providerName: string, providerAvatar: string } }> {
-    let providersDetails = await this.cachingService.getLocal<{ [key: string]: { providerName: string, providerAvatar: string } }>('plugins:staking:providerAddresses');
+    let providersDetails = this.cachingService.getLocal<{ [key: string]: { providerName: string, providerAvatar: string } }>('plugins:staking:providerAddresses');
     if (!providersDetails) {
       const providers = await this.providerService.getAllProviders();
       const identities = await this.identitiesService.getAllIdentities();

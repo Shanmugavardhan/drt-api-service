@@ -31,7 +31,7 @@ describe('TagController', () => {
   });
 
   it(`/GET tags`, async () => {
-    const mockTags: Tag[] = [{ tag: 'dharitri', count: 48974 }, { tag: 'xPortal', count: 34750 }];
+    const mockTags: Tag[] = [{ tag: 'dharitri', count: 48974 }, { tag: 'TDharitri', count: 34750 }];
     tagService.getNftTags.mockResolvedValue(mockTags);
 
     const params = new URLSearchParams({ from: '0', size: '2' }).toString();

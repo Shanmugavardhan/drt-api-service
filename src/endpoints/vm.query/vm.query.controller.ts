@@ -3,7 +3,7 @@ import { ApiCreatedResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { VmQueryRequest } from "./entities/vm.query.request";
 import { VmQueryService } from "./vm.query.service";
 import { DeepHistoryInterceptor } from "src/interceptors/deep-history.interceptor";
-import { ParseIntPipe } from "@terradharitri/sdk-nestjs-common";
+import { ParseIntPipe } from "@sravankumar02/sdk-nestjs-common";
 
 @Controller()
 @ApiTags('query')

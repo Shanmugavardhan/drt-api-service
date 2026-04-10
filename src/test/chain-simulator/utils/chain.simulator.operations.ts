@@ -1,12 +1,12 @@
 import axios from 'axios';
-import { AddressUtils } from "@terradharitri/sdk-nestjs-common";
+import { AddressUtils } from "@sravankumar02/sdk-nestjs-common";
 
 const VM_TYPE = '0500';
 const CODE_METADATA = '0100';
 const SC_DEPLOY_ADDRESS =
   'drt1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq85hk5z';
 const DCDT_ADDRESS =
-  'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2';
+  'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez';
 
 export async function fundAddress(chainSimulatorUrl: string, address: string) {
   const payload = [
@@ -97,17 +97,25 @@ export async function issueDcdt(args: IssueDcdtArgs) {
 
 export async function transferDcdt(args: TransferDcdtArgs) {
   const transferValue = args.plainAmountOfTokens * 10 ** 18;
-  return await sendTransaction(
+  console.log(`Transferring ${args.plainAmountOfTokens} ${args.tokenIdentifier} from ${args.sender} to ${args.receiver}`);
+  let hexAmountOfTokens = transferValue.toString(16);
+
+  if (hexAmountOfTokens.length % 2 !== 0) {
+    hexAmountOfTokens = '0' + hexAmountOfTokens;
+  }
+  const txHash = await sendTransaction(
     new SendTransactionArgs({
       chainSimulatorUrl: args.chainSimulatorUrl,
       sender: args.sender,
       receiver: args.receiver,
       dataField: `DCDTTransfer@${Buffer.from(args.tokenIdentifier).toString(
         'hex',
-      )}@${transferValue.toString(16)}`,
+      )}@${hexAmountOfTokens}`,
       value: '0',
     }),
   );
+  console.log(`DCDT transfer completed. Transaction hash: ${txHash}`);
+  return txHash;
 }
 
 export async function sendTransaction(
@@ -621,5 +629,32 @@ export async function transferNftFromTo(
   );
 
   console.log(`NFT transfer completed. Transaction hash: ${txHash}`);
+  return txHash;
+}
+
+export async function transferRewa(
+  chainSimulatorUrl: string,
+  senderAddress: string,
+  receiverAddress: string,
+  amountInRewaNominated: number
+): Promise<string> {
+  const amountInRewaNominatedStr = amountInRewaNominated.toString();
+  const rewaDecimals = '0'.repeat(18);
+  console.log(`Transferring ${amountInRewaNominated} REWA from ${senderAddress} to ${receiverAddress}`);
+
+  const txHash = await sendTransaction(
+    new SendTransactionArgs({
+      chainSimulatorUrl,
+      sender: senderAddress,
+      receiver: receiverAddress,
+      value: (amountInRewaNominatedStr.concat(rewaDecimals)),
+      dataField: '',
+    }),
+  );
+
+  console.log(`REWA transfer completed. Transaction hash: ${txHash}`);
+  await axios.post(
+    `${chainSimulatorUrl}/simulator/generate-blocks-until-transaction-processed/${txHash}`,
+  );
   return txHash;
 }

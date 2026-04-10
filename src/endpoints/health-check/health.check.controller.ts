@@ -1,4 +1,4 @@
-import { NoAuth } from "@terradharitri/sdk-nestjs-auth";
+import { NoAuth } from "@sravankumar02/sdk-nestjs-auth";
 import { Controller, Get } from "@nestjs/common";
 import { ApiOperation } from "@nestjs/swagger";
 

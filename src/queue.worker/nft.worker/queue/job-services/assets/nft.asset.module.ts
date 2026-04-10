@@ -1,4 +1,4 @@
-import { ApiModule } from "@terradharitri/sdk-nestjs-http";
+import { ApiModule } from "@sravankumar02/sdk-nestjs-http";
 import { Module } from "@nestjs/common";
 import { AWSService } from "../thumbnails/aws.service";
 import { NftAssetService } from "./nft.asset.service";

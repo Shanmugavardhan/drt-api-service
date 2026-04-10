@@ -8,7 +8,7 @@ api:
   websocket: true
 cron:
   cacheWarmer: true
-  fastWarm: true
+  fastWarm: false
   queueWorker: true
   elasticUpdater: false
 flags:
@@ -20,6 +20,12 @@ flags:
   processNfts: true
   collectionPropertiesFromGateway: false
 features:
+  websocketSubscription:
+    enabled: false
+    port: 6002
+    maxSubscriptionsPerInstance: 10000
+    maxSubscriptionsPerClient: 10
+    broadcastIntervalMs: 6000
   eventsNotifier:
     enabled: false
     port: 5674
@@ -45,17 +51,13 @@ features:
     serviceUrl: 'https://devnet-nfts-graph.dharitri.org/graphql'
   exchange:
     enabled: false
-    serviceUrl: 'https://devnet-graph.dharitrix.org/graphql'
+    serviceUrl: 'https://devnet-graph.dharitrix.com/graphql'
   dataApi:
     enabled: false
     serviceUrl: 'https://devnet-data-api.dharitri.org'
   assetsFetch:
     enabled: true
-    assetesUrl: 'https://tools.dharitri.org/assets-cdn'
-  mediaRedirect:
-    enabled: false
-    storageUrls:
-      - 'https://s3.amazonaws.com/devnet-media.dharitri.org'
+    assetsUrl: 'https://tools.dharitri.org/assets-cdn'
   auth:
     enabled: false
     maxExpirySeconds: 86400
@@ -65,12 +67,22 @@ features:
       - ''
     jwtSecret: ''
   stakingV4:
-    enabled: false
+    enabled: true
     cronExpression: '*/5 * * * * *'
     activationEpoch: 1043
   chainAndromeda:
-    enabled: false
+    enabled: true
     activationEpoch: 4
+  stakingV5:
+    enabled: true
+    activationEpoch: 4817
+  chainBarnard:
+    enabled: true
+    activationEpoch: 3964
+    activationTimestamp: 1751460236
+  deprecatedRelayedV1V2:
+    enabled: true
+    activationEpoch: 4569
   nodeEpochsLeft:
     enabled: false
   transactionProcessor:
@@ -83,6 +95,13 @@ features:
   transactionBatch:
     enabled: true
     maxLookBehind: 100
+  elasticCircuitBreaker:
+    enabled: false
+    durationThresholdMs: 5000
+    failureCountThreshold: 5
+    resetTimeoutMs: 30000
+  elasticMigratedIndices:
+    logs: 'events'
   statusChecker:
     enabled: false
     thresholds:
@@ -104,14 +123,14 @@ features:
     enabled: false
     maxLookBehindNonces: 100
   nodesFetch:
-    enabled: true
-    serviceUrl: 'https://devnet-api.dharitri.org'
+    enabled: false
+    serviceUrl: 'https://pdt-belts-marc-are.trycloudflare.com'
   tokensFetch:
-    enabled: true
-    serviceUrl: 'https://devnet-api.dharitri.org'
+    enabled: false
+    serviceUrl: 'https://pdt-belts-marc-are.trycloudflare.com'
   providersFetch:
-    enabled: true
-    serviceUrl: 'https://devnet-api.dharitri.org'
+    enabled: false
+    serviceUrl: 'https://pdt-belts-marc-are.trycloudflare.com'
 image:
   width: 600
   height: 600
@@ -119,21 +138,21 @@ image:
 aws:
   s3KeyId: ''
   s3Secret: ''
-  s3Bucket: 'devnet-media.dharitri.org'
+  s3Bucket: 'devnet-media.numbat.com'
   s3Region: ''
+  s3Endpoint: ''
 urls:
-  self: 'https://devnet-api.dharitri.org'
+  self: 'https://pdt-belts-marc-are.trycloudflare.com'
   elastic:
-    - 'https://devnet-index.dharitri.org'
+    - ' https://designs-based-containers-thesaurus.trycloudflare.com'
   gateway:
-    - 'https://devnet-gateway.dharitri.org'
+    - 'https://tops-consolidated-chip-reliable.trycloudflare.com'
   verifier: 'https://play-api.dharitri.org'
   redis: '127.0.0.1'
   rabbitmq: 'amqp://127.0.0.1:5672'
   providers: 'https://devnet-delegation-api.dharitri.org/providers'
   delegation: 'https://devnet-delegation-api.dharitri.org'
-  media: 'https://devnet-media.dharitri.org'
-  nftThumbnails: 'https://devnet-media.dharitri.org/nfts/thumbnail'
+  media: 'https://devnet-media.numbat.com'
   tmp: '/tmp'
   ipfs: 'https://ipfs.io/ipfs'
   socket: 'devnet-socket-api.dharitri.org'
@@ -159,10 +178,10 @@ keepAliveTimeout:
   downstream: 61000
   upstream: 60000
 contracts:
-  dcdt: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2'
-  auction: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf'
-  staking: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqqllls9k7r6g'
-  delegationManager: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqyllls4jxmwv'
+  dcdt: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez'
+  auction: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp'
+  staking: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqlllsjr0pnq'
+  delegationManager: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllsz8he8y'
   delegation: 'drt1qqqqqqqqqqqqqpgq97wezxw6l7lgg7k9rxvycrz66vn92ksh2tssmj7a6l'
   metabonding: 'drt1qqqqqqqqqqqqqpgqkg7we73j769ew5we4yyx7uyvnn0nefqgd8ssxxm3m5'
 inflation:
@@ -173,6 +192,15 @@ inflation:
   - 1130177
   - 924690
   - 719203
+stakingV5Inflation:
+  - 1069805
+# november 2025 devnet supply: 24_433_152. first year rewards = 50% * (8.757% * supply) = 1_069_805
+# TODO: calculate the inflation for upcoming years based on the inflation decay
 nftProcess:
   parallelism: 1
   maxRetries: 3
+compression:
+  enabled: true
+  level: 6
+  threshold: 1024
+  chunkSize: 16384

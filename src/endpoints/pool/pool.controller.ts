@@ -1,4 +1,4 @@
-import { ParseAddressAndMetachainPipe, ParseAddressPipe, ParseEnumPipe, ParseIntPipe, ParseTransactionHashPipe, ParseArrayPipe } from "@terradharitri/sdk-nestjs-common";
+import { ParseAddressAndMetachainPipe, ParseAddressPipe, ParseEnumPipe, ParseIntPipe, ParseTransactionHashPipe, ParseArrayPipe } from "@sravankumar02/sdk-nestjs-common";
 import { Controller, DefaultValuePipe, Get, NotFoundException, Param, Query } from "@nestjs/common";
 import { ApiExcludeEndpoint, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { PoolService } from "./pool.service";
@@ -6,7 +6,7 @@ import { QueryPagination } from "src/common/entities/query.pagination";
 import { TransactionInPool } from "./entities/transaction.in.pool.dto";
 import { TransactionType } from "../transactions/entities/transaction.type";
 import { PoolFilter } from "./entities/pool.filter";
-import { ParseArrayPipeOptions } from "@terradharitri/sdk-nestjs-common/lib/pipes/entities/parse.array.options";
+import { ParseArrayPipeOptions } from "@sravankumar02/sdk-nestjs-common/lib/pipes/entities/parse.array.options";
 
 @Controller()
 @ApiTags('pool')

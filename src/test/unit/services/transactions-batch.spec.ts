@@ -1,4 +1,4 @@
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Test } from "@nestjs/testing";
 import { BatchTransactionStatus } from "src/endpoints/transactions.batch/entities/batch.transaction.status";
 import { TransactionBatch } from "src/endpoints/transactions.batch/entities/transaction.batch";

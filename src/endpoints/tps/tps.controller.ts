@@ -1,11 +1,11 @@
 import { Controller, Get, Param } from "@nestjs/common";
 import { ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Tps } from "./entities/tps";
-import { ParseEnumPipe } from "@terradharitri/sdk-nestjs-common";
+import { ParseEnumPipe } from "@sravankumar02/sdk-nestjs-common";
 import { TpsFrequency } from "./entities/tps.frequency";
 import { TpsService } from "./tps.service";
 import { TpsInterval } from "./entities/tps.interval";
-import { NoCache } from "@terradharitri/sdk-nestjs-cache";
+import { NoCache } from "@sravankumar02/sdk-nestjs-cache";
 
 @Controller('tps')
 @ApiTags('tps')

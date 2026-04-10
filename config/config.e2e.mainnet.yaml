@@ -20,6 +20,12 @@ flags:
   processNfts: true
   collectionPropertiesFromGateway: false
 features:
+  websocketSubscription:
+    enabled: true
+    port: 6002
+    maxSubscriptionsPerInstance: 10000
+    maxSubscriptionsPerClient: 10
+    broadcastIntervalMs: 6000
   eventsNotifier:
     enabled: false
     port: 5674
@@ -46,7 +52,7 @@ features:
     serviceUrl: 'https://nfts-graph.dharitri.org/graphql'
   exchange:
     enabled: false
-    serviceUrl: 'https://graph.dharitrix.org/graphql'
+    serviceUrl: 'https://graph.dharitrix.com/graphql'
   dataApi:
     enabled: false
     serviceUrl: 'https://data-api.dharitri.org'
@@ -63,8 +69,15 @@ features:
     cronExpression: '*/5 * * * * *'
     activationEpoch: 1391
   chainAndromeda:
-    enabled: false
+    enabled: true
     activationEpoch: 4
+  stakingV5:
+    enabled: true
+    activationEpoch: 1951
+  chainBarnard:
+    enabled: true
+    activationEpoch: 1820
+    activationTimestamp: 1753376544
   nodeEpochsLeft:
     enabled: false
   transactionProcessor:
@@ -80,6 +93,13 @@ features:
   deepHistory:
     enabled: false
     url: ''
+  elasticCircuitBreaker:
+    enabled: false
+    durationThresholdMs: 5000
+    failureCountThreshold: 5
+    resetTimeoutMs: 30000
+  elasticMigratedIndices:
+    logs: 'events'
   statusChecker:
     enabled: false
     thresholds:
@@ -111,7 +131,7 @@ features:
     serviceUrl: 'https://api.dharitri.org'
   assetsFetch:
     enabled: false
-    assetesUrl: 'https://tools.dharitri.org/assets-cdn'
+    assetsUrl: 'https://tools.dharitri.org/assets-cdn'
 image:
   width: 600
   height: 600
@@ -119,8 +139,9 @@ image:
 aws:
   s3KeyId: ''
   s3Secret: ''
-  s3Bucket: 'media.dharitri.org'
+  s3Bucket: 'media.numbat.com'
   s3Region: ''
+  s3Endpoint: ''
 urls:
   self: 'http://localhost:3001'
   elastic:
@@ -132,8 +153,7 @@ urls:
   rabbitmq: 'amqp://127.0.0.1:5672'
   providers: 'https://delegation-api.dharitri.org/providers'
   delegation: 'https://delegation-api.dharitri.org'
-  media: 'https://media.dharitri.org'
-  nftThumbnails: 'https://media.dharitri.org/nfts/thumbnail'
+  media: 'https://media.numbat.com'
   tmp: '/tmp'
   ipfs: 'https://ipfs.io/ipfs'
   socket: 'socket-api-fra.dharitri.org'
@@ -159,10 +179,10 @@ keepAliveTimeout:
   downstream: 61000
   upstream: 60000
 contracts:
-  dcdt: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2'
-  auction: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf'
-  staking: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqqllls9k7r6g'
-  delegationManager: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqyllls4jxmwv'
+  dcdt: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez'
+  auction: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp'
+  staking: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqlllsjr0pnq'
+  delegationManager: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllsz8he8y'
   delegation: 'drt1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q8vqld4'
   metabonding: 'drt1qqqqqqqqqqqqqpgq50dge6rrpcra4tp9hl57jl0893a4r2r72jpstdjq3v'
 inflation:
@@ -173,6 +193,8 @@ inflation:
   - 1130177
   - 924690
   - 719203
+stakingV5Inflation:
+  - 1262802
 nftProcess:
   parallelism: 1
   maxRetries: 3

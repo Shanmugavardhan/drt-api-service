@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { CacheInfo } from "src/utils/cache.info";
 import { TokenAssets } from "src/common/assets/entities/token.assets";
 import { AccountAssets } from "./entities/account.assets";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { MoaPair } from "src/endpoints/moa/entities/moa.pair";
 import { Identity } from "src/endpoints/identities/entities/identity";
 import { MoaFarm } from "src/endpoints/moa/entities/moa.farm";
@@ -11,7 +11,7 @@ import { DnsContracts } from "src/utils/dns.contracts";
 import { NftRank } from "./entities/nft.rank";
 import { MoaStakingProxy } from "src/endpoints/moa/entities/moa.staking.proxy";
 import { Provider } from "src/endpoints/providers/entities/provider";
-import { ApiService } from "@terradharitri/sdk-nestjs-http";
+import { ApiService } from "@sravankumar02/sdk-nestjs-http";
 import { ApiConfigService } from "../api-config/api.config.service";
 import { KeybaseIdentity } from "../keybase/entities/keybase.identity";
 
@@ -131,7 +131,7 @@ export class AssetsService {
     if (pairs) {
       for (const pair of pairs) {
         allAssets[pair.address] = this.createAccountAsset(
-          `DharitriX: ${pair.baseSymbol}/${pair.quoteSymbol} Liquidity Pool`,
+          `Dharitrix: ${pair.baseSymbol}/${pair.quoteSymbol} Liquidity Pool`,
           ['dharitrix', 'liquiditypool']
         );
       }
@@ -140,7 +140,7 @@ export class AssetsService {
     if (farms) {
       for (const farm of farms) {
         allAssets[farm.address] = this.createAccountAsset(
-          `DharitriX: ${farm.name} Farm`,
+          `Dharitrix: ${farm.name} Farm`,
           ['dharitrix', 'farm']
         );
       }
@@ -155,12 +155,12 @@ export class AssetsService {
       }
 
       allAssets[moaSettings.lockedAssetContract] = this.createAccountAsset(
-        `DharitriX: Locked asset Contract`,
+        `Dharitrix: Locked asset Contract`,
         ['dharitrix', 'lockedasset']
       );
 
       allAssets[moaSettings.distributionContract] = this.createAccountAsset(
-        `DharitriX: Distribution Contract`,
+        `Dharitrix: Distribution Contract`,
         ['dharitrix', 'lockedasset']
       );
     }
@@ -168,7 +168,7 @@ export class AssetsService {
     if (stakingProxies) {
       for (const stakingProxy of stakingProxies) {
         allAssets[stakingProxy.address] = this.createAccountAsset(
-          `DharitriX: ${stakingProxy.dualYieldTokenName} Contract`,
+          `Dharitrix: ${stakingProxy.dualYieldTokenName} Contract`,
           ['dharitrix', 'metastaking']
         );
       }
@@ -217,8 +217,8 @@ export class AssetsService {
     return new AccountAssets({
       name: name,
       tags: tags,
-      iconSvg: 'https://raw.githubusercontent.com/TerraDharitri/drt-assets/master/accounts/icons/dharitrix.svg',
-      iconPng: 'https://raw.githubusercontent.com/TerraDharitri/drt-assets/master/accounts/icons/dharitrix.png',
+      iconSvg: 'https://raw.githubusercontent.com/terradharitri/drt-assets/master/accounts/icons/dharitrix.svg',
+      iconPng: 'https://raw.githubusercontent.com/terradharitri/drt-assets/master/accounts/icons/dharitrix.png',
     });
   }
 }

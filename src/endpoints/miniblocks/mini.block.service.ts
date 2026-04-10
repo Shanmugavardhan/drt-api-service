@@ -1,4 +1,4 @@
-import { ApiUtils } from "@terradharitri/sdk-nestjs-http";
+import { ApiUtils } from "@sravankumar02/sdk-nestjs-http";
 import { Injectable } from "@nestjs/common";
 import { QueryPagination } from "src/common/entities/query.pagination";
 import { IndexerService } from "src/common/indexer/indexer.service";

@@ -1,11 +1,11 @@
-import { ParseArrayPipe, ParseIntPipe, ParseBlockHashPipe, ParseTransactionHashPipe, ParseAddressPipe, ParseBoolPipe } from "@terradharitri/sdk-nestjs-common";
+import { ParseArrayPipe, ParseIntPipe, ParseBlockHashPipe, ParseTransactionHashPipe, ParseAddressPipe, ParseBoolPipe } from "@sravankumar02/sdk-nestjs-common";
 import { Controller, DefaultValuePipe, Get, NotFoundException, Param, Query } from "@nestjs/common";
 import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { SmartContractResult } from "./entities/smart.contract.result";
 import { SmartContractResultService } from "./scresult.service";
 import { QueryPagination } from "src/common/entities/query.pagination";
 import { SmartContractResultFilter } from "./entities/smart.contract.result.filter";
-import { ParseArrayPipeOptions } from "@terradharitri/sdk-nestjs-common/lib/pipes/entities/parse.array.options";
+import { ParseArrayPipeOptions } from "@sravankumar02/sdk-nestjs-common/lib/pipes/entities/parse.array.options";
 import { SmartContractResultOptions } from "./entities/smart.contract.result.options";
 
 @Controller()

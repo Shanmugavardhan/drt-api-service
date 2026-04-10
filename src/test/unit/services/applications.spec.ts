@@ -9,7 +9,7 @@ import { AccountAssets } from '../../../common/assets/entities/account.assets';
 import { Application } from 'src/endpoints/applications/entities/application';
 import { GatewayService } from 'src/common/gateway/gateway.service';
 import { TransferService } from 'src/endpoints/transfers/transfer.service';
-import { CacheService } from '@terradharitri/sdk-nestjs-cache';
+import { CacheService } from '@sravankumar02/sdk-nestjs-cache';
 import { BadRequestException } from '@nestjs/common';
 
 describe('ApplicationService', () => {
@@ -93,9 +93,9 @@ describe('ApplicationService', () => {
           name: 'Dharitri DNS: Contract 239',
           description: '',
           social: new AccountAssetsSocial({
-            website: 'https://dharitrix.org',
-            twitter: 'https://twitter.com/DharitriXApp',
-            telegram: 'https://t.me/DharitriXApp',
+            website: 'https://dharitrix.com',
+            twitter: 'https://twitter.com/DharitrixApp',
+            telegram: 'https://t.me/DharitrixApp',
             blog: 'https://dharitri.org/blog/durian-exchange-moa-tokenomics',
           }),
           tags: ['dns'],

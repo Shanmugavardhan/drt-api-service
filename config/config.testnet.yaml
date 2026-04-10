@@ -20,6 +20,12 @@ flags:
   processNfts: true
   collectionPropertiesFromGateway: false
 features:
+  websocketSubscription:
+    enabled: false
+    port: 6002
+    maxSubscriptionsPerInstance: 10000
+    maxSubscriptionsPerClient: 10
+    broadcastIntervalMs: 6000
   eventsNotifier:
     enabled: false
     port: 5674
@@ -45,7 +51,7 @@ features:
     serviceUrl: 'https://testnet-nfts-graph.dharitri.org/graphql'
   exchange:
     enabled: false
-    serviceUrl: 'https://testnet-graph.dharitrix.org/graphql'
+    serviceUrl: 'https://testnet-graph.dharitrix.com/graphql'
   dataApi:
     enabled: false
     serviceUrl: 'https://testnet-data-api.dharitri.org'
@@ -58,12 +64,22 @@ features:
       - ''
     jwtSecret: ''
   stakingV4:
-    enabled: false
+    enabled: true
     cronExpression: '*/5 * * * * *'
     activationEpoch: 1043
   chainAndromeda:
-    enabled: false
+    enabled: true
     activationEpoch: 4
+  stakingV5:
+    enabled: true
+    activationEpoch: 2519
+  chainBarnard:
+    enabled: false
+    activationEpoch: 2030
+    activationTimestamp: 1864749472
+  deprecatedRelayedV1V2:
+    enabled: true
+    activationEpoch: 2038
   nodeEpochsLeft:
     enabled: false
   transactionProcessor:
@@ -79,6 +95,13 @@ features:
   deepHistory:
     enabled: false
     url: ''
+  elasticCircuitBreaker:
+    enabled: false
+    durationThresholdMs: 5000
+    failureCountThreshold: 5
+    resetTimeoutMs: 30000
+  elasticMigratedIndices:
+    logs: 'events'
   statusChecker:
     enabled: false
     thresholds:
@@ -100,21 +123,17 @@ features:
     enabled: false
     maxLookBehindNonces: 100
   nodesFetch:
-    enabled: true
+    enabled: false
     serviceUrl: 'https://testnet-api.dharitri.org'
   tokensFetch:
-    enabled: true
+    enabled: false
     serviceUrl: 'https://testnet-api.dharitri.org'
   providersFetch:
-    enabled: true
+    enabled: false
     serviceUrl: 'https://testnet-api.dharitri.org'
   assetsFetch:
     enabled: true
-    assetesUrl: 'https://tools.dharitri.org/assets-cdn'
-  mediaRedirect:
-    enabled: false
-    storageUrls:
-      - 'https://s3.amazonaws.com/testnet-media.dharitri.org'
+    assetsUrl: 'https://tools.dharitri.org/assets-cdn'
 image:
   width: 600
   height: 600
@@ -122,8 +141,9 @@ image:
 aws:
   s3KeyId: ''
   s3Secret: ''
-  s3Bucket: 'testnet-media.dharitri.org'
+  s3Bucket: 'testnet-media.numbat.com'
   s3Region: ''
+  s3Endpoint: ''
 urls:
   self: 'https://testnet-api.dharitri.org'
   elastic:
@@ -135,8 +155,7 @@ urls:
   rabbitmq: 'amqp://127.0.0.1:5672'
   providers: 'https://testnet-delegation-api.dharitri.org/providers'
   delegation: 'https://testnet-delegation-api.dharitri.org'
-  media: 'https://testnet-media.dharitri.org'
-  nftThumbnails: 'https://testnet-media.dharitri.org/nfts/thumbnail'
+  media: 'https://testnet-media.numbat.com'
   tmp: '/tmp'
   ipfs: 'https://ipfs.io/ipfs'
   socket: 'testnet-socket-api.dharitri.org'
@@ -162,10 +181,10 @@ keepAliveTimeout:
   downstream: 61000
   upstream: 60000
 contracts:
-  dcdt: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2'
-  auction: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf'
-  staking: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqqllls9k7r6g'
-  delegationManager: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqyllls4jxmwv'
+  dcdt: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez'
+  auction: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp'
+  staking: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqlllsjr0pnq'
+  delegationManager: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllsz8he8y'
   delegation: 'drt1qqqqqqqqqqqqqpgqp699jngundfqw07d8jzkepucvpzush6k3wvqeyzkqc'
   metabonding: 'drt1qqqqqqqqqqqqqpgq2l9w0qv98htrhdwuz6ppsw47tn3hhff3d8ssau9z0z'
 inflation:
@@ -176,6 +195,15 @@ inflation:
   - 1130177
   - 924690
   - 719203
+stakingV5Inflation:
+  - 930117
+# november 2025 testnet supply: 21_242_828. first year rewards = 50% * (8.75% * supply) = 930117
+# TODO: calculate the inflation for upcoming years based on the inflation decay
 nftProcess:
   parallelism: 1
   maxRetries: 3
+compression:
+  enabled: true
+  level: 6
+  threshold: 1024
+  chunkSize: 16384

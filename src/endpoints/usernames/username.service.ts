@@ -1,6 +1,6 @@
-import { Constants, OriginLogger, BinaryUtils, AddressUtils } from "@terradharitri/sdk-nestjs-common";
-import { ApiService } from "@terradharitri/sdk-nestjs-http";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { Constants, OriginLogger, BinaryUtils, AddressUtils } from "@sravankumar02/sdk-nestjs-common";
+import { ApiService } from "@sravankumar02/sdk-nestjs-http";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { CacheInfo } from "src/utils/cache.info";
@@ -21,7 +21,7 @@ export class UsernameService {
   async getUsernameForAddressRaw(address: string): Promise<string | null> {
     try {
       // eslint-disable-next-line require-await
-      const result = await this.apiService.get(`${this.apiConfigService.getDurianIdUrl()}/users/api/v1/users/${address}`, undefined, async error => error?.response?.status === HttpStatus.FORBIDDEN);
+      const result = await this.apiService.get(`${this.apiConfigService.getMaiarIdUrl()}/users/api/v1/users/${address}`, undefined, async error => error?.response?.status === HttpStatus.FORBIDDEN);
 
       const username = result?.data?.herotag;
 

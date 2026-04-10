@@ -1,5 +1,5 @@
-import { BinaryUtils, OriginLogger } from "@terradharitri/sdk-nestjs-common";
-import { ApiService } from "@terradharitri/sdk-nestjs-http";
+import { BinaryUtils, OriginLogger } from "@sravankumar02/sdk-nestjs-common";
+import { ApiService } from "@sravankumar02/sdk-nestjs-http";
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { ApiConfigService } from "../api-config/api.config.service";
 import { GithubUserInfo } from "./entities/github.user.info";

@@ -20,8 +20,8 @@ services:
 
   chainsimulator:
     container_name: chainsimulator
-    image: dharitri/chainsimulator:v1.8.4-barnard-test2
-    command: ["--node-override-config", "./overridable-config.toml"]
+    image: dharitri/chainsimulator:latest
+    command: [ "--node-override-config", "./overridable-config.toml" ]
     volumes:
       - ./overridable-config.toml:/dharitri/overridable-config.toml
     depends_on:

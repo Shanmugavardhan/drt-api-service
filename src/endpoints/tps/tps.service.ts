@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { TpsFrequency } from "./entities/tps.frequency";
 import { TpsUtils } from "src/utils/tps.utils";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { CacheInfo } from "src/utils/cache.info";
 import { Tps } from "./entities/tps";
 import { TpsInterval } from "./entities/tps.interval";

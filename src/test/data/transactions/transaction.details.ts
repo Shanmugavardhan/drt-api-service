@@ -16,7 +16,7 @@ const transactionDetails =
   value: "0",
   fee: "118000000000000",
   timestamp: 1643615040,
-  data: "RVNEVFRyYW5zZmVyQDUxNTc1NDJkMzQzNjYxNjMzMDMxQDAzN2UxMWQ2MDA=",
+  data: "RENEVFRyYW5zZmVyQDUxNTc1NDJkMzQzNjYxNjMzMDMxQDAzN2UxMWQ2MDA=",
   tokenIdentifier: "QWT-46ac01",
   tokenValue: "15000000000",
   action: {

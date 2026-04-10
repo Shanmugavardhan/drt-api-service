@@ -13,6 +13,7 @@ export interface ScResult {
   originalTxHash: string;
   callType: string;
   timestamp: number;
+  timestampMs?: number;
   tokens: string[];
   dcdtValues: string[];
   operation: string;

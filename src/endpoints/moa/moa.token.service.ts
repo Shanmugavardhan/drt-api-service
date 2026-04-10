@@ -6,9 +6,9 @@ import { MoaPair } from "./entities/moa.pair";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { MoaFarmService } from "./moa.farm.service";
 import { MoaSettingsService } from "./moa.settings.service";
-import { Constants } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { Constants } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { QueryPagination } from "src/common/entities/query.pagination";
 import { MoaTokenType } from "./entities/moa.token.type";
 import { GraphQlService } from "src/common/graphql/graphql.service";
@@ -171,8 +171,22 @@ export class MoaTokenService {
 
   private async getAllMoaTokensRaw(): Promise<MoaToken[]> {
     const pairs = await this.moaPairService.getAllMoaPairs();
+    const tokenVolumes: Record<string, number> = {};
 
-    const moaTokens: MoaToken[] = [];
+    for (const pair of pairs) {
+      if (!tokenVolumes[pair.baseId]) {
+        tokenVolumes[pair.baseId] = 0;
+      }
+      tokenVolumes[pair.baseId] += Number(pair.volume24h || 0);
+
+      if (!tokenVolumes[pair.quoteId]) {
+        tokenVolumes[pair.quoteId] = 0;
+      }
+      tokenVolumes[pair.quoteId] += Number(pair.volume24h || 0);
+    }
+
+    const tokenPoolMap: Record<string, { token: MoaToken; liquidityValue: number }> = {};
+
     for (const pair of pairs) {
       if (pair.baseSymbol === 'WREWA' && pair.quoteSymbol === "USDC") {
         const wrewaToken = new MoaToken();
@@ -181,9 +195,12 @@ export class MoaTokenService {
         wrewaToken.name = pair.baseName;
         wrewaToken.price = pair.basePrice;
         wrewaToken.previous24hPrice = pair.basePrevious24hPrice;
-        wrewaToken.previous24hVolume = pair.volume24h;
+        wrewaToken.previous24hVolume = tokenVolumes[pair.baseId];
         wrewaToken.tradesCount = this.computeTradesCountForMoaToken(wrewaToken, pairs);
-        moaTokens.push(wrewaToken);
+
+        if (!tokenPoolMap[wrewaToken.id] || pair.totalValue > tokenPoolMap[wrewaToken.id].liquidityValue) {
+          tokenPoolMap[wrewaToken.id] = { token: wrewaToken, liquidityValue: pair.totalValue };
+        }
       }
 
       const moaToken = this.getMoaToken(pair);
@@ -191,12 +208,17 @@ export class MoaTokenService {
         continue;
       }
 
+      moaToken.previous24hVolume = tokenVolumes[moaToken.id];
       moaToken.tradesCount = this.computeTradesCountForMoaToken(moaToken, pairs);
 
-      moaTokens.push(moaToken);
+      if (!tokenPoolMap[moaToken.id] || pair.totalValue > tokenPoolMap[moaToken.id].liquidityValue) {
+        tokenPoolMap[moaToken.id] = { token: moaToken, liquidityValue: pair.totalValue };
+      }
     }
 
-    return moaTokens.distinct(x => x.id);
+    const moaTokens = Object.values(tokenPoolMap).map(entry => entry.token);
+
+    return moaTokens;
   }
 
   private getMoaToken(pair: MoaPair): MoaToken | null {
@@ -207,7 +229,7 @@ export class MoaTokenService {
         name: pair.quoteName,
         price: pair.quotePrice,
         previous24hPrice: pair.quotePrevious24hPrice,
-        previous24hVolume: pair.volume24h,
+        previous24hVolume: 0,
         tradesCount: 0,
       };
     }
@@ -219,7 +241,7 @@ export class MoaTokenService {
         name: pair.baseName,
         price: pair.basePrice,
         previous24hPrice: pair.basePrevious24hPrice,
-        previous24hVolume: pair.volume24h,
+        previous24hVolume: 0,
         tradesCount: 0,
       };
     }
@@ -231,7 +253,7 @@ export class MoaTokenService {
         name: pair.quoteName,
         price: pair.quotePrice,
         previous24hPrice: pair.quotePrevious24hPrice,
-        previous24hVolume: pair.volume24h,
+        previous24hVolume: 0,
         tradesCount: 0,
       };
     }

@@ -1,6 +1,6 @@
-import { Constants } from "@terradharitri/sdk-nestjs-common";
-import { ApiService } from "@terradharitri/sdk-nestjs-http";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { Constants } from "@sravankumar02/sdk-nestjs-common";
+import { ApiService } from "@sravankumar02/sdk-nestjs-http";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Test, TestingModule } from "@nestjs/testing";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { UsernameService } from "src/endpoints/usernames/username.service";
@@ -30,7 +30,7 @@ describe('UsernameService', () => {
         {
           provide: ApiConfigService,
           useValue: {
-            getDurianIdUrl: jest.fn(),
+            getMaiarIdUrl: jest.fn(),
           },
         },
         {
@@ -82,7 +82,7 @@ describe('UsernameService', () => {
 
       const result = await service.getUsernameForAddressRaw(address);
 
-      expect(apiServiceSpy).toHaveBeenCalledWith(`${service['apiConfigService'].getDurianIdUrl()}/users/api/v1/users/${address}`, undefined, expect.any(Function));
+      expect(apiServiceSpy).toHaveBeenCalledWith(`${service['apiConfigService'].getMaiarIdUrl()}/users/api/v1/users/${address}`, undefined, expect.any(Function));
       expect(loggerErrorSpy).toHaveBeenCalledTimes(2);
       expect(result).toBeNull();
     });

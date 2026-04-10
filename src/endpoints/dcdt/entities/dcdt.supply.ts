@@ -1,6 +1,6 @@
 import { DcdtLockedAccount } from "./dcdt.locked.account";
 import { ApiProperty } from "@nestjs/swagger";
-import { SwaggerUtils } from "@terradharitri/sdk-nestjs-common";
+import { SwaggerUtils } from "@sravankumar02/sdk-nestjs-common";
 
 export class DcdtSupply {
   constructor(init?: Partial<DcdtSupply>) {

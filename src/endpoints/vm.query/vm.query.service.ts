@@ -1,6 +1,6 @@
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
-import { PerformanceProfiler } from "@terradharitri/sdk-nestjs-monitoring";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
+import { PerformanceProfiler } from "@sravankumar02/sdk-nestjs-monitoring";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { LogMetricsEvent } from "src/common/entities/log.metrics.event";

@@ -1,5 +1,5 @@
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
-import { ApiService } from "@terradharitri/sdk-nestjs-http";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
+import { ApiService } from "@sravankumar02/sdk-nestjs-http";
 import { Test } from "@nestjs/testing";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { QueryPagination } from "src/common/entities/query.pagination";
@@ -143,9 +143,9 @@ describe('ProviderService', () => {
             location: 'Sibiu',
             url: 'https://staking.provider',
           },
-          contract: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqhllllshmqrha',
+          contract: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhllllsqw3p74',
           explorerURL:
-            'https://explorer.dharitri.org/providers/drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqhllllshmqrha',
+            'https://explorer.dharitri.org/providers/drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhllllsqw3p74',
           featured: true,
           owner: 'drt1yj4jlay9rrzahran7jxk89gsg9frxw6l5qyca9dqhp8c4f5e0vdsehe40p',
           serviceFee: '1500',
@@ -192,7 +192,7 @@ describe('ProviderService', () => {
       jest.spyOn(service['logger'], 'error').mockImplementation(() =>
         "Error when getting delegation provider");
 
-      const address = 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqhllllshmqrha';
+      const address = 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhllllsqw3p74';
       const result = await service.getDelegationProviderByAddressRaw(address);
 
       expect(result).toBeUndefined();
@@ -202,13 +202,13 @@ describe('ProviderService', () => {
   describe('getProviderAddresses', () => {
     it('should return all contract addresses from delegation manager contract address', async () => {
       const base64Providers = [
-        'IzMAAAAAAAAAAAAAAAAAAAACMzAAAAAAAAAAAAL///8=',
-        'IzMAAAAAAAAAAAAAAAAAAAACMzAAAAAAAAAAAAP///8=',
+        'AAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAL///8=',
+        'AAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAP///8=',
       ];
 
       const expectedBech32Encoded = [
-        'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqhllllshmqrha',
-        'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqlllllsuqfmuj',
+        'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhllllsqw3p74',
+        'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqlllllst4ce46',
       ];
 
       jest.spyOn(vmQuery, 'vmQuery').mockResolvedValue(base64Providers);
@@ -230,7 +230,7 @@ describe('ProviderService', () => {
 
   describe('getProviderAccounts', () => {
     it('should return a list of delegators for a given provider', async () => {
-      const contract = 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqc0llllshdqcz2';
+      const contract = 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqc0llllsqc36tz';
       const elasticProviderDelegatorsMock = createElasticMockDelegators(25, contract);
       jest.spyOn(elasticIndexerService, 'getProviderDelegators').mockResolvedValue(elasticProviderDelegatorsMock);
 
@@ -244,7 +244,7 @@ describe('ProviderService', () => {
     });
 
     it('should return [] if no delegators are available from elastic from given contract address', async () => {
-      const contract = 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqrhlllls9nv2kr';
+      const contract = 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqrhllllsjxaglt';
       jest.spyOn(elasticIndexerService, 'getProviderDelegators').mockResolvedValue([]);
 
       const results = await service.getProviderAccounts(contract, new QueryPagination());
@@ -254,7 +254,7 @@ describe('ProviderService', () => {
     });
 
     it('should return paginated delegators for a given provider', async () => {
-      const contract = 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqc0llllshdqcz2';
+      const contract = 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqc0llllsqc36tz';
       const pagination = new QueryPagination({ from: 0, size: 10 });
       const elasticProviderDelegatorsMock = createElasticMockDelegators(10, contract);
       jest.spyOn(elasticIndexerService, 'getProviderDelegators').mockResolvedValue(elasticProviderDelegatorsMock);
@@ -268,7 +268,7 @@ describe('ProviderService', () => {
 
   describe('getProviderAccountsCount', () => {
     it('should return total delegators count for a given provider', async () => {
-      const contract = 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqc0llllshdqcz2';
+      const contract = 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqc0llllsqc36tz';
       jest.spyOn(elasticIndexerService, 'getProviderDelegatorsCount').mockResolvedValue(100);
 
       const results = await service.getProviderAccountsCount(contract);

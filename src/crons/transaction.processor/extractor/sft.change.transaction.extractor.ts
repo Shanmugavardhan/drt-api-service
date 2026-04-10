@@ -1,4 +1,4 @@
-import { BinaryUtils } from "@terradharitri/sdk-nestjs-common";
+import { BinaryUtils } from "@sravankumar02/sdk-nestjs-common";
 import { ShardTransaction } from "@terradharitri/sdk-transaction-processor";
 import { Logger } from "@nestjs/common";
 import { TransactionExtractorInterface } from "./transaction.extractor.interface";

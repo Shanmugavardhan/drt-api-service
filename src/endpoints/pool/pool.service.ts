@@ -2,18 +2,18 @@ import { Injectable } from "@nestjs/common";
 import { QueryPagination } from "src/common/entities/query.pagination";
 import { GatewayService } from "src/common/gateway/gateway.service";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { CacheInfo } from "src/utils/cache.info";
 import { TxPoolGatewayResponse } from "src/common/gateway/entities/tx.pool.gateway.response";
 import { TransactionType } from "../transactions/entities/transaction.type";
 import { TransactionInPool } from "./entities/transaction.in.pool.dto";
 import { PoolFilter } from "./entities/pool.filter";
 import { TxInPoolFields } from "src/common/gateway/entities/tx.in.pool.fields";
-import { AddressUtils } from "@terradharitri/sdk-nestjs-common";
+import { AddressUtils } from "@sravankumar02/sdk-nestjs-common";
 import { ProtocolService } from "../../common/protocol/protocol.service";
 import { TransactionActionService } from "../transactions/transaction-action/transaction.action.service";
 import { Transaction } from "../transactions/entities/transaction";
-import { ApiUtils } from "@terradharitri/sdk-nestjs-http";
+import { ApiUtils } from "@sravankumar02/sdk-nestjs-http";
 
 @Injectable()
 export class PoolService {

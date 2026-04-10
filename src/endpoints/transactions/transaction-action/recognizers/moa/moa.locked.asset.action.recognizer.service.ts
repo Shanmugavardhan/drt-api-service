@@ -6,7 +6,7 @@ import { TransactionActionDcdtNftRecognizerService } from "../dcdt/transaction.a
 import { MoaFunction } from "./entities/moa.function.options";
 import { MoaSettings } from "../../../../moa/entities/moa.settings";
 import { MoaSettingsService } from "../../../../moa/moa.settings.service";
-import { NumberUtils } from "@terradharitri/sdk-nestjs-common";
+import { NumberUtils } from "@sravankumar02/sdk-nestjs-common";
 
 @Injectable()
 export class MoaLockedAssetActionRecognizerService {

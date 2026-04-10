@@ -1,4 +1,4 @@
-import { ApiUtils } from "@terradharitri/sdk-nestjs-http";
+import { ApiUtils } from "@sravankumar02/sdk-nestjs-http";
 
 describe('API helpers', () => {
   describe('Cleanup API response helper', () => {

@@ -1,5 +1,5 @@
-import { Locker, OriginLogger } from '@terradharitri/sdk-nestjs-common';
-import { MetricsService } from '@terradharitri/sdk-nestjs-monitoring';
+import { Locker, OriginLogger } from '@sravankumar02/sdk-nestjs-common';
+import { MetricsService } from '@sravankumar02/sdk-nestjs-monitoring';
 import { Injectable } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { GatewayComponentRequest } from "src/common/gateway/entities/gateway.component.request";

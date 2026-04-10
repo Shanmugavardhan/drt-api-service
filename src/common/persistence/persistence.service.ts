@@ -1,5 +1,5 @@
 import configuration from "config/configuration";
-import { ErrorLoggerAsync, PassthroughAsync } from "@terradharitri/sdk-nestjs-common";
+import { ErrorLoggerAsync, PassthroughAsync } from "@sravankumar02/sdk-nestjs-common";
 import { Injectable } from "@nestjs/common";
 import { CollectionTrait } from "src/endpoints/collections/entities/collection.trait";
 import { NftMedia } from "src/endpoints/nfts/entities/nft.media";

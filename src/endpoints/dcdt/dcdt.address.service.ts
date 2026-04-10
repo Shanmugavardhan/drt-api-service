@@ -16,10 +16,10 @@ import { NftCollectionWithRoles } from "../collections/entities/nft.collection.w
 import { CollectionService } from "../collections/collection.service";
 import { CollectionFilter } from "../collections/entities/collection.filter";
 import { CollectionRoles } from "../tokens/entities/collection.roles";
-import { AddressUtils, BinaryUtils, OriginLogger } from '@terradharitri/sdk-nestjs-common';
-import { ApiUtils } from "@terradharitri/sdk-nestjs-http";
-import { MetricsService } from "@terradharitri/sdk-nestjs-monitoring";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { AddressUtils, BinaryUtils, OriginLogger } from '@sravankumar02/sdk-nestjs-common';
+import { ApiUtils } from "@sravankumar02/sdk-nestjs-http";
+import { MetricsService } from "@sravankumar02/sdk-nestjs-monitoring";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { IndexerService } from "src/common/indexer/indexer.service";
 import { TrieOperationsTimeoutError } from "./exceptions/trie.operations.timeout.error";
 import { CacheInfo } from "src/utils/cache.info";
@@ -101,14 +101,13 @@ export class DcdtAddressService {
 
   async getCollectionsForAddress(address: string, filter: CollectionFilter, pagination: QueryPagination): Promise<NftCollectionWithRoles[]> {
     const tokenCollections = await this.indexerService.getNftCollections(pagination, filter, address);
-    const collectionsIdentifiers = tokenCollections.map((collection) => collection.token);
 
     const indexedCollections: Record<string, any> = {};
     for (const collection of tokenCollections) {
       indexedCollections[collection.token] = collection;
     }
 
-    const accountCollections = await this.collectionService.applyPropertiesToCollections(collectionsIdentifiers);
+    const accountCollections = await this.collectionService.buildCollectionsFromElasticData(tokenCollections);
 
     const collectionsWithRoles: NftCollectionWithRoles[] = [];
 
@@ -373,7 +372,7 @@ export class DcdtAddressService {
       return result;
     }
 
-    const cachedValue = await this.cachingService.getLocal<{ [key: string]: any }>(`address:${address}:dcdts`);
+    const cachedValue = this.cachingService.getLocal<{ [key: string]: any }>(`address:${address}:dcdts`);
 
     if (cachedValue) {
       this.metricsService.incrementCachedApiHit('Gateway.AccountDcdts');

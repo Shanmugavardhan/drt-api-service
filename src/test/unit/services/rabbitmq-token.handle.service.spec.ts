@@ -1,5 +1,5 @@
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
-import { BinaryUtils } from "@terradharitri/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
+import { BinaryUtils } from "@sravankumar02/sdk-nestjs-common";
 import { TestingModule, Test } from "@nestjs/testing";
 import { NotifierEvent } from "src/common/rabbitmq/entities/notifier.event";
 import { RabbitMqTokenHandlerService } from "src/common/rabbitmq/rabbitmq.token.handler.service";

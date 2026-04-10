@@ -1,4 +1,4 @@
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Test } from "@nestjs/testing";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { AssetsService } from "src/common/assets/assets.service";
@@ -25,12 +25,12 @@ import { TransferService } from "src/endpoints/transfers/transfer.service";
 import { MoaPairService } from "src/endpoints/moa/moa.pair.service";
 import * as fs from 'fs';
 import * as path from 'path';
-import { ApiService, ApiUtils } from "@terradharitri/sdk-nestjs-http";
+import { ApiService, ApiUtils } from "@sravankumar02/sdk-nestjs-http";
 import { Token } from "src/endpoints/tokens/entities/token";
 import { NftCollection } from "src/endpoints/collections/entities/nft.collection";
 import { DcdtSupply } from "src/endpoints/dcdt/entities/dcdt.supply";
 import { TokenDetailed } from "src/endpoints/tokens/entities/token.detailed";
-import { NumberUtils } from "@terradharitri/sdk-nestjs-common";
+import { TokenAssetsPriceSourceType } from "../../../common/assets/entities/token.assets.price.source.type";
 
 describe('Token Service', () => {
   let tokenService: TokenService;
@@ -109,6 +109,7 @@ describe('Token Service', () => {
           useValue: {
             getTokenAssets: jest.fn(),
             getAllAccountAssets: jest.fn(),
+            getAllTokenAssets: jest.fn(),
           },
         },
         {
@@ -508,7 +509,7 @@ describe('Token Service', () => {
 
   describe('getTokenCountForAddress', () => {
     it('should return the correct token count for a valid address and filter', async () => {
-      const address = 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf';
+      const address = 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp';
       const filter = new TokenFilter({ type: TokenType.FungibleDCDT });
       const expectedCount = 10;
       const getTokenCountForAddressMock = jest.spyOn(tokenService['indexerService'], 'getTokenCountForAddress')
@@ -522,7 +523,7 @@ describe('Token Service', () => {
 
   describe('getTokenCountForAddressFromElastic', () => {
     it('should return the correct token count from elastic for a valid address and filter', async () => {
-      const address = 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf';
+      const address = 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp';
       const filter = new TokenFilter({ type: TokenType.FungibleDCDT });
       const expectedCount = 10;
       const getTokenCountForAddressMock = jest.spyOn(tokenService['indexerService'], 'getTokenCountForAddress')
@@ -592,6 +593,25 @@ describe('Token Service', () => {
       expect(result).toBeGreaterThanOrEqual(261151384.6163954);
       expect(getAllTokensMock).toHaveBeenCalledTimes(1);
     });
+
+    it('should not include custom priced tokens in market cap', async () => {
+      const mockTokens = JSON.parse(fs.readFileSync(path.join(__dirname, '../../mocks/tokens.mock.json'), 'utf-8'));
+      const getAllTokensMock = jest.spyOn(tokenService, 'getAllTokens').mockResolvedValue(mockTokens);
+
+      const result = await tokenService.getTokenMarketCapRaw();
+      expect(result).toBeGreaterThanOrEqual(261151384.6163954);
+      expect(getAllTokensMock).toHaveBeenCalledTimes(1);
+
+      const secondToken = mockTokens[1];
+      secondToken.assets.priceSource = { type: 'customUrl' };
+      const newExpectedMarketCap = result - secondToken.marketCap;
+      mockTokens[1] = secondToken;
+
+      jest.spyOn(tokenService, 'getAllTokens').mockResolvedValue(mockTokens);
+
+      const newResult = await tokenService.getTokenMarketCapRaw();
+      expect(newResult).toBe(newExpectedMarketCap);
+    });
   });
 
   describe('getAllTokens', () => {
@@ -605,11 +625,11 @@ describe('Token Service', () => {
         decimals: 18,
         isPaused: false,
         assets: {
-          website: "https://dharitrix.org",
-          description: "wREWA is an DCDT token that has the same value as REWA, the native coin of the  blockchain.",
+          website: "https://dharitrix.com",
+          description: "wREWA is an DCDT token that has the same value as REWA, the native coin of the DharitrI blockchain.",
           status: TokenAssetStatus.active,
-          pngUrl: "https://media.dharitri.org/tokens/asset/WREWA-bd4d79/logo.png",
-          svgUrl: "https://media.dharitri.org/tokens/asset/WREWA-bd4d79/logo.svg",
+          pngUrl: "https://media.numbat.com/tokens/asset/WREWA-bd4d79/logo.png",
+          svgUrl: "https://media.numbat.com/tokens/asset/WREWA-bd4d79/logo.svg",
           ledgerSignature: "3044022062a68d4bdd649aebb5e4ed5c6284e211c689c3b8142e59a47b01cc9997b16dfa0220475b064836849b9c4aa9c5ff18daed91a64f847bd96aa0a26768349f2cd0c24f",
           extraTokens: [],
 
@@ -634,11 +654,11 @@ describe('Token Service', () => {
         decimals: 18,
         isPaused: false,
         assets: {
-          website: "https://dharitrix.org",
-          description: "wREWA is an DCDT token that has the same value as REWA, the native coin of the  blockchain.",
+          website: "https://dharitrix.com",
+          description: "wREWA is an DCDT token that has the same value as REWA, the native coin of the DharitrI blockchain.",
           status: "active",
-          pngUrl: "https://media.dharitri.org/tokens/asset/WREWA-bd4d79/logo.png",
-          svgUrl: "https://media.dharitri.org/tokens/asset/WREWA-bd4d79/logo.svg",
+          pngUrl: "https://media.numbat.com/tokens/asset/WREWA-bd4d79/logo.png",
+          svgUrl: "https://media.numbat.com/tokens/asset/WREWA-bd4d79/logo.svg",
           ledgerSignature: "3044022062a68d4bdd649aebb5e4ed5c6284e211c689c3b8142e59a47b01cc9997b16dfa0220475b064836849b9c4aa9c5ff18daed91a64f847bd96aa0a26768349f2cd0c24f",
         },
         transactions: 5998186,
@@ -672,9 +692,8 @@ describe('Token Service', () => {
       });
 
       it('should return tokens from other sources when isTokensFetchFeatureEnabled is false', async () => {
-
         const mockTokenProperties: Partial<TokenProperties>[] = [{ identifier: 'mockIdentifier' }];
-        let mockTokens: Partial<TokenDetailed>[] = mockTokenProperties.map(properties => ApiUtils.mergeObjects(new TokenDetailed(), properties));
+        const mockTokens: Partial<TokenDetailed>[] = mockTokenProperties.map(properties => ApiUtils.mergeObjects(new TokenDetailed(), properties));
         const mockTokenAssets: Partial<TokenAssets> = { name: 'mockName' };
         const mockNftCollections: Partial<NftCollection>[] = [{ collection: 'mockCollection' }];
         const mockTokenSupply: Partial<DcdtSupply> = { totalSupply: '1000000000000000000', circulatingSupply: '500000000000000000' };
@@ -682,6 +701,7 @@ describe('Token Service', () => {
         jest.spyOn(apiConfigService, 'isTokensFetchFeatureEnabled').mockReturnValue(false);
         jest.spyOn(dcdtService, 'getAllFungibleTokenProperties').mockResolvedValue(mockTokenProperties as TokenProperties[]);
         jest.spyOn(assetsService, 'getTokenAssets').mockResolvedValue(mockTokenAssets as TokenAssets);
+        jest.spyOn(assetsService, 'getAllTokenAssets').mockResolvedValue({ mockIdentifier: mockTokenAssets, 'REWA-000000': mockTokenAssets } as any);
         jest.spyOn(collectionService, 'getNftCollections').mockResolvedValue(mockNftCollections as NftCollection[]);
 
         jest.spyOn(tokenService as any, 'batchProcessTokens').mockImplementation(() => Promise.resolve());
@@ -690,7 +710,7 @@ describe('Token Service', () => {
         jest.spyOn(tokenService as any, 'applyMoaPairType').mockImplementation(() => Promise.resolve());
         jest.spyOn(tokenService as any, 'applyMoaPairTradesCount').mockImplementation(() => Promise.resolve());
         jest.spyOn(cacheService as any, 'batchApplyAll').mockImplementation(() => Promise.resolve());
-        jest.spyOn(dataApiService, 'getDcdtTokenPrice').mockResolvedValue(100);
+        jest.spyOn(dataApiService, 'getDcdtTokenPrice').mockResolvedValue(undefined);
         jest.spyOn(dataApiService, 'getRewaPrice').mockResolvedValue(100);
         jest.spyOn(tokenService as any, 'fetchTokenDataFromUrl').mockResolvedValue(100);
         jest.spyOn(dcdtService, 'getTokenSupply').mockResolvedValue(mockTokenSupply as DcdtSupply);
@@ -703,16 +723,14 @@ describe('Token Service', () => {
         expect(apiConfigService.isTokensFetchFeatureEnabled).toHaveBeenCalled();
         expect(dcdtService.getAllFungibleTokenProperties).toHaveBeenCalled();
 
-        mockTokens.forEach((mockToken) => {
-          expect(assetsService.getTokenAssets).toHaveBeenCalledWith(mockToken.identifier);
+        expect(assetsService.getAllTokenAssets).toHaveBeenCalledTimes(1);
+
+        mockTokens.forEach(mockToken => {
+          mockToken.name = mockTokenAssets.name;
         });
 
         expect(dcdtService.getAllFungibleTokenProperties).toHaveBeenCalled();
-        mockTokens.forEach(mockToken => {
-          expect(assetsService.getTokenAssets).toHaveBeenCalledWith(mockToken.identifier);
-          mockToken.name = mockTokenAssets.name;
-        });
-        expect(assetsService.getTokenAssets).toHaveBeenCalledTimes(mockTokens.length + 1); // add 1 for REWA-000000
+        expect(assetsService.getTokenAssets).toHaveBeenCalledWith('REWA-000000');
 
 
         expect((collectionService as any).getNftCollections).toHaveBeenCalledWith(expect.anything(), { type: [TokenType.MetaDCDT] });
@@ -735,13 +753,19 @@ describe('Token Service', () => {
           }));
         });
 
-        expect((tokenService as any).batchProcessTokens).toHaveBeenCalledWith(mockTokens);
-        expect((tokenService as any).applyMoaLiquidity).toHaveBeenCalledWith(mockTokens.filter(x => x.type !== TokenType.MetaDCDT));
-        expect((tokenService as any).applyMoaPrices).toHaveBeenCalledWith(mockTokens.filter(x => x.type !== TokenType.MetaDCDT));
-        expect((tokenService as any).applyMoaPairType).toHaveBeenCalledWith(mockTokens.filter(x => x.type !== TokenType.MetaDCDT));
-        expect((tokenService as any).applyMoaPairTradesCount).toHaveBeenCalledWith(mockTokens.filter(x => x.type !== TokenType.MetaDCDT));
+        expect((tokenService as any).batchProcessTokens).toHaveBeenCalledTimes(1);
+        const batchProcessCall = ((tokenService as any).batchProcessTokens as jest.Mock).mock.calls[0][0];
+        expect(batchProcessCall).toHaveLength(2);
+        expect(batchProcessCall.map((t: any) => t.identifier)).toContain('mockIdentifier');
+        expect(batchProcessCall.map((t: any) => t.identifier)).toContain('mockCollection');
+
+        expect((tokenService as any).applyMoaLiquidity).toHaveBeenCalledTimes(1);
+        expect((tokenService as any).applyMoaPrices).toHaveBeenCalledTimes(1);
+        expect((tokenService as any).applyMoaPairType).toHaveBeenCalledTimes(1);
+        expect((tokenService as any).applyMoaPairTradesCount).toHaveBeenCalledTimes(1);
         expect((cacheService as any).batchApplyAll).toHaveBeenCalled();
-        mockTokens.forEach(mockToken => {
+
+        for (const mockToken of mockTokens) {
           const priceSourcetype = mockToken.assets?.priceSource?.type;
           if (priceSourcetype === 'dataApi') {
             expect(dataApiService.getDcdtTokenPrice).toHaveBeenCalledWith(mockToken.identifier);
@@ -750,41 +774,137 @@ describe('Token Service', () => {
             expect((tokenService as any).fetchTokenDataFromUrl).toHaveBeenCalledWith(mockToken.assets?.priceSource?.url, pathToPrice);
           }
 
-          if (mockToken.price) {
-            expect(dcdtService.getTokenSupply).toHaveBeenCalledWith(mockToken.identifier);
-            mockToken.supply = mockTokenSupply.totalSupply;
+          expect(dcdtService.getTokenSupply).toHaveBeenCalledWith(mockToken.identifier);
+        }
 
-            if (mockToken.circulatingSupply) {
-              mockToken.marketCap = mockToken.price * NumberUtils.denominateString(mockToken.circulatingSupply.toString(), mockToken.decimals);
-            }
-          }
+        expect(result).toBeDefined();
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBe(3);
+
+        const nonRewaTokens = result.filter(t => t.identifier !== 'REWA-000000');
+        nonRewaTokens.forEach(token => {
+          expect(token.supply).toBe(mockTokenSupply.totalSupply);
+          expect(token.circulatingSupply).toBe(mockTokenSupply.circulatingSupply);
         });
 
-        mockTokens = mockTokens.sortedDescending(
-          token => token.assets ? 1 : 0,
-          token => token.isLowLiquidity ? 0 : (token.marketCap ?? 0),
-          token => token.transactions ?? 0,
-        );
+        expect(result.map(t => t.identifier)).toContain('mockIdentifier');
+        expect(result.map(t => t.identifier)).toContain('mockCollection');
+        expect(result.map(t => t.identifier)).toContain('REWA-000000');
 
-        mockTokens.push(new TokenDetailed({
-          identifier: 'REWA-000000',
-          name: 'REWA',
-          canPause: false,
-          canUpgrade: false,
-          canWipe: false,
-          price: 100,
-          decimals: 18,
-          isLowLiquidity: false,
-          marketCap: 0,
-          circulatingSupply: '0',
-          supply: '0',
-          assets: {
-            name: 'mockName',
-          } as TokenAssets,
-        }));
-
-        expect(result).toEqual(mockTokens);
+        const rewaToken = result.find(t => t.identifier === 'REWA-000000');
+        expect(rewaToken).toBeDefined();
+        expect(rewaToken?.price).toBe(100);
+        expect(rewaToken?.supply).toBe('0');
+        expect(rewaToken?.circulatingSupply).toBe('0');
       });
+    });
+
+    it('adjusts the order depending on the price source and market cap', async () => {
+      jest.spyOn(tokenService['apiConfigService'], 'isTokensFetchFeatureEnabled').mockReturnValue(false);
+      jest.spyOn(tokenService['dcdtService'], 'getAllFungibleTokenProperties').mockResolvedValue([
+        new TokenProperties({ identifier: 'token1' }),
+        new TokenProperties({ identifier: 'token2' }), // <- will have custom price source
+        new TokenProperties({ identifier: 'token3' }),
+        new TokenProperties({ identifier: 'token4' }),
+        new TokenProperties({ identifier: 'token5' }),
+      ]);
+
+      const mockAllAssets: { [key: string]: TokenAssets } = {
+        token1: new TokenAssets({ name: 'Token token1' }),
+        token2: new TokenAssets({
+          name: 'Token token2',
+          priceSource: {
+            type: TokenAssetsPriceSourceType.customUrl,
+            path: '0.usdPrice',
+            url: 'url',
+          },
+        }),
+        token3: new TokenAssets({ name: 'Token token3' }),
+        token4: new TokenAssets({ name: 'Token token4' }),
+        token5: new TokenAssets({ name: 'Token token5' }),
+        'REWA-000000': new TokenAssets({ name: 'REWA' }),
+      };
+      jest.spyOn(tokenService['assetsService'], 'getAllTokenAssets').mockResolvedValue(mockAllAssets);
+
+      // eslint-disable-next-line require-await
+      jest.spyOn(tokenService['assetsService'], 'getTokenAssets').mockImplementation(async (identifier: string) => {
+        return mockAllAssets[identifier];
+      });
+
+      jest.spyOn(tokenService['collectionService'], 'getNftCollections').mockResolvedValue([]);
+
+      jest.spyOn(tokenService['dataApiService'], 'getRewaPrice').mockResolvedValue(0);
+      jest.spyOn(tokenService['dataApiService'], 'getDcdtTokenPrice').mockImplementation((identifier: string) => {
+        return Promise.resolve(identifier === 'token4' ? undefined : 1);
+      });
+      jest.spyOn(tokenService['dcdtService'], 'getTokenSupply').mockResolvedValue({
+        minted: '1000000',
+        initialMinted: '1000000',
+        burned: '0',
+        totalSupply: '1000000',
+        circulatingSupply: '1000000',
+        lockedAccounts: undefined,
+      });
+
+      // Fake other dependencies
+      jest.spyOn(tokenService as any, 'applyMoaLiquidity').mockResolvedValue(undefined);
+      jest.spyOn(tokenService as any, 'applyMoaPrices').mockResolvedValue(undefined);
+      jest.spyOn(tokenService as any, 'applyMoaPairType').mockResolvedValue(undefined);
+      jest.spyOn(tokenService as any, 'applyMoaPairTradesCount').mockResolvedValue(undefined);
+      jest.spyOn(tokenService['apiService'] as any, 'get').mockResolvedValue({ data: [{ usdPrice: 1.0 }] });
+      jest.spyOn(tokenService['cachingService'], 'batchApplyAll').mockImplementation(
+        // eslint-disable-next-line require-await
+        async (...args: unknown[]) => {
+          const tokens = args[0] as TokenDetailed[];
+          const apply = args[3] as (token: TokenDetailed, assets: TokenAssets, fromGetter: boolean) => void;
+
+          for (const token of tokens) {
+            if (token.identifier === 'token2') {
+              apply(token, new TokenAssets({
+                name: `Token ${token.identifier}`,
+                priceSource: {
+                  type: TokenAssetsPriceSourceType.customUrl,
+                  path: '0.usdPrice',
+                  url: 'url',
+                },
+              }), true);
+            } else {
+              apply(token, new TokenAssets({
+                name: `Token ${token.identifier}`,
+                // No priceSource
+              }), true);
+            }
+          }
+        }
+      );
+
+      // eslint-disable-next-line require-await
+      jest.spyOn(tokenService as any, 'batchProcessTokens').mockImplementation(async (tokens: any) => {
+        const marketCaps = {
+          token1: 500,
+          token2: 400,
+          token3: 300,
+          token4: 200,
+          token5: 100,
+        };
+        for (const [index, token] of tokens.entries()) {
+          token.decimals = 18;
+          token.isLowLiquidity = false;
+          token.transactions = 10;
+          if (index === 3) {
+            continue; // make one of the tokens (token4) not to have any price or market cap at all
+          }
+          // @ts-ignore
+          token.marketCap = marketCaps[token.identifier];
+          token.price = 1;
+        }
+      });
+
+      const result = await tokenService.getAllTokensRaw();
+      const sortedIdentifiers = result.map(t => t.identifier);
+
+      // token2 has custom price source, token4 does not have price/market cap at all
+      expect(sortedIdentifiers.slice(0, 5)).toEqual(['token5', 'token3', 'token1', 'token2', 'token4']);
     });
 
     it('should return values from cache', async () => {
@@ -965,9 +1085,9 @@ describe('Token Service', () => {
         description: '',
         tags: ['exchange', 'tests'],
         iconPng:
-          'https://raw.githubusercontent.com/TerraDharitri/drt-assets/master/accounts/icons/test.png',
+          'https://raw.githubusercontent.com/terradharitri/drt-assets/master/accounts/icons/test.png',
         iconSvg:
-          'https://raw.githubusercontent.com/TerraDharitri/drt-assets/master/accounts/icons/test.svg',
+          'https://raw.githubusercontent.com/terradharitri/drt-assets/master/accounts/icons/test.svg',
       }),
     };
 

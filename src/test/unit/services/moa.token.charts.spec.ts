@@ -4,7 +4,7 @@ import { GraphQlService } from "src/common/graphql/graphql.service";
 import { MoaTokenChart } from "src/endpoints/moa/entities/moa.token.chart";
 import { MoaTokenService } from "src/endpoints/moa/moa.token.service";
 import { MoaToken } from "src/endpoints/moa/entities/moa.token";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 
 describe('MoaTokenChartsService', () => {
   let moaTokenChartsService: MoaTokenChartsService;
@@ -94,7 +94,7 @@ describe('MoaTokenChartsService', () => {
       jest.spyOn(moaTokenService, 'getMoaTokenByIdentifier').mockResolvedValue(mockToken);
       jest.spyOn(moaTokenChartsService as any, 'isMoaToken').mockReturnValue(true);
 
-      const result = await moaTokenChartsService.getTokenPricesDayResolutionRaw('TOKEN-123456', '1683561648');
+      const result = await moaTokenChartsService.getTokenPricesDayResolutionRaw('TOKEN-123456');
 
       if (result) {
         expect(result).toHaveLength(2);
@@ -107,7 +107,7 @@ describe('MoaTokenChartsService', () => {
     it('should return an empty array when no data is available', async () => {
       jest.spyOn(graphQlService, 'getExchangeServiceData').mockResolvedValue({});
       jest.spyOn(moaTokenChartsService as any, 'isMoaToken').mockReturnValue(true);
-      const result = await moaTokenChartsService.getTokenPricesDayResolutionRaw('TOKEN-123456', '1683561648');
+      const result = await moaTokenChartsService.getTokenPricesDayResolutionRaw('TOKEN-123456');
 
       expect(result).toEqual([]);
     });

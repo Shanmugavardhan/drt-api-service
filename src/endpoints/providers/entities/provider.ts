@@ -1,5 +1,5 @@
 
-import { SwaggerUtils } from "@terradharitri/sdk-nestjs-common";
+import { SwaggerUtils } from "@sravankumar02/sdk-nestjs-common";
 import { ApiProperty } from "@nestjs/swagger";
 import { NodesInfos } from "./nodes.infos";
 import { Identity } from "src/endpoints/identities/entities/identity";

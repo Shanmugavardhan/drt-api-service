@@ -1,5 +1,5 @@
-import { JwtAdminGuard, NativeAuthGuard } from "@terradharitri/sdk-nestjs-auth";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { JwtAdminGuard, NativeAuthGuard } from "@sravankumar02/sdk-nestjs-auth";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Body, Controller, Delete, Get, HttpException, HttpStatus, Inject, Param, Put, Query, UseGuards } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { ApiExcludeController, ApiResponse } from "@nestjs/swagger";

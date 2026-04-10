@@ -18,16 +18,16 @@ import { GatewayComponentRequest } from 'src/common/gateway/entities/gateway.com
 import { TransactionActionService } from './transaction-action/transaction.action.service';
 import { TransactionDecodeDto } from './entities/dtos/transaction.decode.dto';
 import { TransactionStatus } from './entities/transaction.status';
-import { AddressUtils, BinaryUtils, Constants, PendingExecuter } from '@terradharitri/sdk-nestjs-common';
-import { ApiUtils } from "@terradharitri/sdk-nestjs-http";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { AddressUtils, BinaryUtils, Constants, PendingExecuter } from '@sravankumar02/sdk-nestjs-common';
+import { ApiUtils } from "@sravankumar02/sdk-nestjs-http";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { TransactionUtils } from './transaction.utils';
 import { IndexerService } from "src/common/indexer/indexer.service";
 import { TransactionOperation } from './entities/transaction.operation';
 import { AssetsService } from 'src/common/assets/assets.service';
 import { AccountAssets } from 'src/common/assets/entities/account.assets';
 import crypto from 'crypto-js';
-import { OriginLogger } from '@terradharitri/sdk-nestjs-common';
+import { OriginLogger } from '@sravankumar02/sdk-nestjs-common';
 import { ApiConfigService } from 'src/common/api-config/api.config.service';
 import { UsernameService } from '../usernames/username.service';
 import { MiniBlock } from 'src/common/indexer/entities/miniblock';
@@ -42,6 +42,8 @@ import { NetworkService } from 'src/endpoints/network/network.service';
 import { TransactionWithPpu } from './entities/transaction.with.ppu';
 import { GasBucket } from './entities/gas.bucket';
 import { GasBucketConstants } from './constants/gas.bucket.constants';
+import { TransactionAction } from "./transaction-action/entities/transaction.action";
+import { TransactionActionCategory } from "./transaction-action/entities/transaction.action.category";
 
 @Injectable()
 export class TransactionService {
@@ -93,7 +95,42 @@ export class TransactionService {
       return this.getTransactionCountForAddress(filter.sender ?? '');
     }
 
+    if (this.isCacheableTransactionCount(filter, address)) {
+      return await this.cachingService.getOrSet(
+        CacheInfo.TransactionsCount.key,
+        async () => await this.indexerService.getTransactionCount(filter, address),
+        CacheInfo.TransactionsCount.ttl,
+        Constants.oneSecond(),
+      );
+    }
+
     return await this.indexerService.getTransactionCount(filter, address);
+  }
+
+  public reorderAccountSentTransactionsByNonce(transactions: TransactionDetailed[], accountAddress: string): TransactionDetailed[] {
+    const sentPositions: number[] = [];
+    const sentTransactions: TransactionDetailed[] = [];
+
+    transactions.forEach((tx, index) => {
+      if (tx.sender === accountAddress) {
+        sentPositions.push(index);
+        sentTransactions.push(tx);
+      }
+    });
+
+    sentTransactions.sort((a, b) => {
+      const nonceA = a.nonce ?? 0;
+      const nonceB = b.nonce ?? 0;
+      return nonceB - nonceA;
+    });
+
+    const result = [...transactions];
+
+    sentPositions.forEach((position, index) => {
+      result[position] = sentTransactions[index];
+    });
+
+    return result;
   }
 
   private getDistinctUserAddressesFromTransactions(transactions: Transaction[]): string[] {
@@ -164,10 +201,31 @@ export class TransactionService {
   }
 
   async getTransactions(filter: TransactionFilter, pagination: QueryPagination, queryOptions?: TransactionQueryOptions, address?: string, fields?: string[]): Promise<Transaction[]> {
+    if (this.isCacheableTransactionList(filter, queryOptions, fields, address)) {
+      const cacheInfo = CacheInfo.Transactions(pagination);
+      return await this.cachingService.getOrSet(
+        cacheInfo.key,
+        () => this.computeTransactions(filter, pagination, queryOptions, address, fields),
+        cacheInfo.ttl,
+        Constants.oneSecond(),
+      );
+    }
+
+    return await this.computeTransactions(filter, pagination, queryOptions, address, fields);
+  }
+
+  private async computeTransactions(filter: TransactionFilter, pagination: QueryPagination, queryOptions?: TransactionQueryOptions, address?: string, fields?: string[]): Promise<Transaction[]> {
     const elasticTransactions = await this.indexerService.getTransactions(filter, pagination, address);
 
     let transactions: TransactionDetailed[] = [];
     transactions = elasticTransactions.map(x => ApiUtils.mergeObjects(new TransactionDetailed(), x));
+
+    const hasSenderFilter = filter.sender || (filter.senders && filter.senders.length > 0);
+    const hasReceiverFilter = filter.receivers && filter.receivers.length > 0;
+
+    if (address && !hasSenderFilter && !hasReceiverFilter) {
+      transactions = this.reorderAccountSentTransactionsByNonce(transactions, address);
+    }
 
     if (filter.hashes) {
       const txHashes: string[] = filter.hashes;
@@ -193,7 +251,6 @@ export class TransactionService {
 
     for (const transaction of transactions) {
       transaction.type = undefined;
-      transaction.relayedVersion = this.extractRelayedVersion(transaction);
     }
 
     await this.processTransactions(transactions, {
@@ -201,6 +258,8 @@ export class TransactionService {
       withUsername: queryOptions?.withUsername ?? false,
       withActionTransferValue: queryOptions?.withActionTransferValue ?? false,
     });
+
+    this.processRelayedInfo(transactions);
 
     return transactions;
   }
@@ -225,9 +284,9 @@ export class TransactionService {
 
     if (transaction !== null) {
       transaction.price = await this.getTransactionPrice(transaction);
-      transaction.relayedVersion = this.extractRelayedVersion(transaction);
 
       await this.processTransactions([transaction], { withScamInfo: true, withUsername: true, withActionTransferValue });
+      this.processRelayedInfo([transaction]);
 
       if (transaction.pendingResults === true && transaction.results) {
         for (const result of transaction.results) {
@@ -255,7 +314,7 @@ export class TransactionService {
     const accountAssets = await this.assetsService.getAllAccountAssets();
 
     let usernameAssets: Record<string, AccountAssets> = {};
-    if (options.withUsernameAssets && this.apiConfigService.getDurianIdUrl()) {
+    if (options.withUsernameAssets && this.apiConfigService.getMaiarIdUrl()) {
       const addresses = this.getDistinctUserAddressesFromTransactions(transactions);
 
       usernameAssets = await this.getUsernameAssetsForAddresses(addresses);
@@ -347,7 +406,30 @@ export class TransactionService {
     }
   }
 
+  public processRelayedInfo(transactions: TransactionDetailed[]) {
+    for (const transaction of transactions) {
+      transaction.relayedVersion = this.extractRelayedVersion(transaction);
+      if (transaction.relayedVersion && ["v1", "v2"].includes(transaction.relayedVersion)) {
+        const shouldSkip = this.apiConfigService.shouldDeprecateRelayedV1V2(transaction.epoch ?? 0);
+        if (shouldSkip) {
+          transaction.function = undefined;
+          transaction.action = new TransactionAction({
+            category: TransactionActionCategory.deprecatedRelayedV1V2,
+            name: "Deprecated transaction action",
+            description: `Relayed v1/v2 transactions are deprecated`,
+          });
+        }
+      }
+      if (!transaction.isRelayed) {
+        transaction.relayedVersion = undefined;
+      }
+    }
+  }
+
   async processTransactions(transactions: Transaction[], options: { withScamInfo: boolean, withUsername: boolean, withActionTransferValue: boolean }): Promise<void> {
+
+    this.normalizeTimestampMs(transactions);
+
     try {
       await this.pluginsService.processTransactions(transactions, options.withScamInfo);
     } catch (error) {
@@ -370,6 +452,15 @@ export class TransactionService {
     }
 
     await this.applyAssets(transactions, { withUsernameAssets: options.withUsername });
+  }
+
+
+  private normalizeTimestampMs(transactions: Transaction[]): void {
+    for (const transaction of transactions) {
+      if ((!transaction.timestampMs || transaction.timestampMs === 0) && transaction.timestamp) {
+        transaction.timestampMs = transaction.timestamp * 1000;
+      }
+    }
   }
 
   private async getPendingResults(transaction: Transaction): Promise<boolean | undefined> {
@@ -454,18 +545,25 @@ export class TransactionService {
 
   private async getSmartContractResultsRaw(transactionHashes: Array<string>): Promise<Array<SmartContractResult[] | undefined>> {
     const resultsRaw = await this.indexerService.getSmartContractResults(transactionHashes) as any[];
+
+    const resultsByHash = new Map<string, any[]>();
+
     for (const result of resultsRaw) {
       result.hash = result.scHash;
-
       delete result.scHash;
+
+      const txHash = result.originalTxHash;
+      if (!resultsByHash.has(txHash)) {
+        resultsByHash.set(txHash, []);
+      }
+      resultsByHash.get(txHash)?.push(result);
     }
 
     const results: Array<SmartContractResult[] | undefined> = [];
-
     for (const transactionHash of transactionHashes) {
-      const resultRaw = resultsRaw.filter(({ originalTxHash }) => originalTxHash == transactionHash);
+      const resultRaw = resultsByHash.get(transactionHash);
 
-      if (resultRaw.length > 0) {
+      if (resultRaw && resultRaw.length > 0) {
         results.push(resultRaw.map((result: any) => ApiUtils.mergeObjects(new SmartContractResult(), result)));
       } else {
         results.push(undefined);
@@ -568,7 +666,7 @@ export class TransactionService {
   }
 
   private extractRelayedVersion(transaction: TransactionDetailed): string | undefined {
-    if (transaction.isRelayed == true && transaction.data) {
+    if (transaction.data) {
       const decodedData = BinaryUtils.base64Decode(transaction.data);
 
       if (decodedData.startsWith('relayedTx@')) {
@@ -744,5 +842,53 @@ export class TransactionService {
     }
 
     return buckets;
+  }
+
+  private isEmptyTransactionFilter(filter: TransactionFilter): boolean {
+    return !filter.address &&
+      !filter.sender &&
+      !(filter.senders && filter.senders.length > 0) &&
+      !(filter.receivers && filter.receivers.length > 0) &&
+      !filter.token &&
+      !(filter.tokens && filter.tokens.length > 0) &&
+      !(filter.functions && filter.functions.length > 0) &&
+      filter.senderShard === undefined &&
+      filter.receiverShard === undefined &&
+      !filter.miniBlockHash &&
+      !(filter.hashes && filter.hashes.length > 0) &&
+      filter.status === undefined &&
+      filter.before === undefined &&
+      filter.after === undefined &&
+      filter.condition === undefined &&
+      filter.order === undefined &&
+      filter.senderOrReceiver === undefined &&
+      filter.isScCall === undefined &&
+      filter.isRelayed === undefined &&
+      filter.relayer === undefined &&
+      filter.round === undefined &&
+      filter.withRefunds === undefined &&
+      filter.withRelayedScresults === undefined &&
+      filter.withTxsRelayedByAddress === undefined;
+  }
+
+  private isCacheableTransactionList(filter: TransactionFilter, queryOptions?: TransactionQueryOptions, fields?: string[], address?: string): boolean {
+    const hasFieldSelection = Array.isArray(fields) && fields.length > 0;
+    if (address || hasFieldSelection || !this.isEmptyTransactionFilter(filter) || !queryOptions) {
+      return false;
+    }
+
+    const hasAnyEnrichmentOption = queryOptions.withScResults ||
+      queryOptions.withBlockInfo ||
+      queryOptions.withActionTransferValue ||
+      queryOptions.withUsername ||
+      queryOptions.withTxsOrder ||
+      queryOptions.withOperations !== undefined ||
+      queryOptions.withLogs !== undefined;
+
+    return !hasAnyEnrichmentOption;
+  }
+
+  private isCacheableTransactionCount(filter: TransactionFilter, address?: string): boolean {
+    return !address && this.isEmptyTransactionFilter(filter);
   }
 }

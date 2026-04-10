@@ -9,13 +9,14 @@ import { TokenRoles } from "../tokens/entities/token.roles";
 import { AssetsService } from "../../common/assets/assets.service";
 import { DcdtLockedAccount } from "./entities/dcdt.locked.account";
 import { DcdtSupply } from "./entities/dcdt.supply";
-import { BinaryUtils, Constants, AddressUtils, OriginLogger, BatchUtils } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { BinaryUtils, Constants, AddressUtils, OriginLogger, BatchUtils } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { IndexerService } from "src/common/indexer/indexer.service";
 import { DcdtType } from "./entities/dcdt.type";
 import { ElasticIndexerService } from "src/common/indexer/elastic/elastic.indexer.service";
 import { randomUUID } from "crypto";
 import { DcdtSubType } from "./entities/dcdt.sub.type";
+import { PluginService } from "../../common/plugins/plugin.service";
 
 @Injectable()
 export class DcdtService {
@@ -27,6 +28,7 @@ export class DcdtService {
     private readonly cachingService: CacheService,
     private readonly vmQueryService: VmQueryService,
     private readonly indexerService: IndexerService,
+    private readonly pluginService: PluginService,
     @Inject(forwardRef(() => AssetsService))
     private readonly assetsService: AssetsService,
     private readonly elasticIndexerService: ElasticIndexerService
@@ -367,7 +369,9 @@ export class DcdtService {
   }
 
   async getTokenSupply(identifier: string): Promise<DcdtSupply> {
-    const { supply, minted, burned, initialMinted } = await this.gatewayService.getDcdtSupply(identifier);
+    const dcdtSupply = await this.gatewayService.getDcdtSupply(identifier);
+    this.pluginService.formatTokenSupply(identifier, dcdtSupply);
+    const { supply, minted, burned, initialMinted } = dcdtSupply;
 
     const isCollectionOrToken = identifier.split('-').length === 2;
     if (isCollectionOrToken) {

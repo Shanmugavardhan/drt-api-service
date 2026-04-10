@@ -158,7 +158,7 @@ describe('AccountController', () => {
     });
 
     it('should return accounts details for a given owner address', async () => {
-      const ownerAddress: string = "drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf";
+      const ownerAddress: string = "drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp";
       const params = new URLSearchParams({ ownerAddress: ownerAddress }).toString();
       accountServiceMocks.getAccountsCount.mockReturnValue(25);
 
@@ -371,7 +371,7 @@ describe('AccountController', () => {
         isGuarded: true,
         activeGuardianActivationEpoch: 496,
         activeGuardianAddress: "drt1x5d4p63uwcns8cvyrl4g3qgvwwa2nkt5jdp0vwetc7csqzpjzz0qyyry43",
-        activeGuardianServiceUid: "TCSService",
+        activeGuardianServiceUid: "DharitrITCSService",
         txCount: 100,
         scrCount: 50,
         timestamp: 1708946805,

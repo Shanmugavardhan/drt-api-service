@@ -93,7 +93,7 @@ export function transactions() {
 }
 
 export function handleSummary(data) {
-  return {
-    'k6/output/summary.json': JSON.stringify(data),
-  };
+    return {
+        'k6/output/summary.json': JSON.stringify(data),
+    };
 }

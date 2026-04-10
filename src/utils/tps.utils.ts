@@ -1,4 +1,4 @@
-import { Constants } from "@terradharitri/sdk-nestjs-common";
+import { Constants } from "@sravankumar02/sdk-nestjs-common";
 import { TpsFrequency } from "src/endpoints/tps/entities/tps.frequency";
 import { TpsInterval } from "src/endpoints/tps/entities/tps.interval";
 

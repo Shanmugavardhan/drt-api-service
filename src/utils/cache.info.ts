@@ -1,4 +1,4 @@
-import { Constants } from "@terradharitri/sdk-nestjs-common";
+import { Constants } from "@sravankumar02/sdk-nestjs-common";
 import { QueryPagination } from "src/common/entities/query.pagination";
 import { BlockFilter } from "src/endpoints/blocks/entities/block.filter";
 import { TpsInterval } from "src/endpoints/tps/entities/tps.interval";
@@ -105,6 +105,18 @@ export class CacheInfo {
     };
   }
 
+  static Transactions(queryPagination: QueryPagination): CacheInfo {
+    return {
+      key: `transactions:${queryPagination.from}:${queryPagination.size}`,
+      ttl: Constants.oneSecond() * 6,
+    };
+  }
+
+  static TransactionsCount: CacheInfo = {
+    key: 'transactions:count',
+    ttl: Constants.oneSecond() * 6,
+  };
+
   static IdentityProfilesKeybases: CacheInfo = {
     key: 'identityProfilesKeybases',
     ttl: Constants.oneHour(),
@@ -162,9 +174,9 @@ export class CacheInfo {
     };
   }
 
-  static TokenDailyChart(tokenIdentifier: string, after: string): CacheInfo {
+  static TokenDailyChart(tokenIdentifier: string): CacheInfo {
     return {
-      key: `tokenDailyChart:${tokenIdentifier}:${after}`,
+      key: `tokenDailyChart:${tokenIdentifier}`,
       ttl: Constants.oneDay(),
     };
   }
@@ -174,9 +186,16 @@ export class CacheInfo {
     ttl: Constants.oneDay(),
   };
 
-  static CollectionRanks: CacheInfo = {
-    key: 'collectionRanks',
-    ttl: Constants.oneDay(),
+  static Nfts(queryPagination: QueryPagination): CacheInfo {
+    return {
+      key: `nfts:${queryPagination.from}:${queryPagination.size}`,
+      ttl: Constants.oneSecond() * 6,
+    };
+  }
+
+  static NftsCount: CacheInfo = {
+    key: 'nfts:count',
+    ttl: Constants.oneSecond() * 6,
   };
 
   static AccountAssets: CacheInfo = {
@@ -217,6 +236,72 @@ export class CacheInfo {
     return {
       key: `collection:${identifier}`,
       ttl: Constants.oneDay(),
+    };
+  }
+
+  static CollectionTraits(identifier: string): CacheInfo {
+    return {
+      key: `collectionTraits:${identifier}`,
+      ttl: Constants.oneMinute() * 10,
+    };
+  }
+
+  static CollectionRoles(identifier: string): CacheInfo {
+    return {
+      key: `collectionRoles:${identifier}`,
+      ttl: Constants.oneMinute() * 5,
+    };
+  }
+
+  static CollectionLogo(identifier: string): CacheInfo {
+    return {
+      key: `collectionLogo:${identifier}`,
+      ttl: Constants.oneHour(),
+    };
+  }
+
+  static CollectionRanks: CacheInfo = {
+    key: 'collectionRanks',
+    ttl: Constants.oneDay(),
+  };
+
+  static CollectionRanksForIdentifier(identifier: string): CacheInfo {
+    return {
+      key: `collectionRanks:${identifier}`,
+      ttl: Constants.oneMinute() * 10,
+    };
+  }
+
+  static CollectionCountForAddress(address: string): CacheInfo {
+    return {
+      key: `collectionCount:${address}`,
+      ttl: Constants.oneMinute(),
+    };
+  }
+
+  static CollectionRolesCountForAddress(address: string): CacheInfo {
+    return {
+      key: `collectionRolesCount:${address}`,
+      ttl: Constants.oneMinute(),
+    };
+  }
+
+  static Collections(pagination: QueryPagination): CacheInfo {
+    return {
+      key: `collections:${pagination.from}:${pagination.size}`,
+      ttl: Constants.oneSecond() * 6,
+    };
+  }
+
+  static CollectionsCount: CacheInfo = {
+    key: 'collectionsCount',
+    ttl: Constants.oneSecond() * 6,
+  };
+
+  static CollectionsForAddress(address: string, pagination: QueryPagination): CacheInfo {
+    return {
+      key: `collectionsForAddress:${address}:${pagination.from}:${pagination.size}`,
+      ttl: Constants.oneSecond() * 6,
     };
   }
 
@@ -469,7 +554,7 @@ export class CacheInfo {
   static BlocksCount(filter: BlockFilter): CacheInfo {
     return {
       key: `blocks:count:${JSON.stringify(filter)}`,
-      ttl: Constants.oneMinute(),
+      ttl: Constants.oneSecond() * 6,
     };
   }
 
@@ -708,6 +793,13 @@ export class CacheInfo {
     return {
       key: `ppuMetadata:shard:${shardId}`,
       ttl: Constants.oneSecond() * 30,
+    };
+  }
+
+  static WsTimestampMsToProcess(): CacheInfo {
+    return {
+      key: `wsLastProcessedTimestampMs`,
+      ttl: Constants.oneMinute(),
     };
   }
 }

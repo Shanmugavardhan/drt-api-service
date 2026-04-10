@@ -1,4 +1,4 @@
-import { ApiService } from "@terradharitri/sdk-nestjs-http";
+import { ApiService } from "@sravankumar02/sdk-nestjs-http";
 import { TestingModule, Test } from "@nestjs/testing";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { GithubService } from "src/common/github/github.service";

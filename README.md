@@ -82,7 +82,10 @@ An API instance can be started with the following behavior:
 It depends on the following optional external systems:
 - events notifier rabbitmq: queue that pushes logs & events which are handled internally e.g. to trigger NFT media fetch
 - data: provides REWA price information for transactions
-- dharitrix: provides price information regarding various tokens listed on the DharitriX
+- dharitrix: provides price information regarding various tokens listed on the Dharitrix
+- nodes provider: fetch nodes data instead of self-computing (config: `features.nodesFetch`)
+- staking providers fetcher: fetch staking providers data instead of self-computing (config: `features.providersFetch`)
+- tokens provider: fetch tokens data instead of self-computing (config: `features.tokensFetch`)
 - ipfs: ipfs gateway for fetching mainly NFT metadata & media files
 - media: ipfs gateway which will be used as prefix for NFT media & metadata returned in the NFT details
 - media internal: caching layer for ipfs data to fetch from a centralized system such as S3 for performance reasons

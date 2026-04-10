@@ -9,7 +9,7 @@ import { NodeSort } from "./entities/node.sort";
 import { SortNodes } from "src/common/entities/sort.nodes";
 import { NodeFilter } from "./entities/node.filter";
 import { QueryPagination } from "src/common/entities/query.pagination";
-import { ParseAddressPipe, ParseBlsHashPipe, ParseBoolPipe, ParseEnumPipe, ParseIntPipe } from "@terradharitri/sdk-nestjs-common";
+import { ParseAddressPipe, ParseBlsHashPipe, ParseBoolPipe, ParseEnumPipe, ParseIntPipe } from "@sravankumar02/sdk-nestjs-common";
 import { NodeAuction } from "./entities/node.auction";
 import { NodeSortAuction } from "./entities/node.sort.auction";
 import { NodeAuctionFilter } from "./entities/node.auction.filter";

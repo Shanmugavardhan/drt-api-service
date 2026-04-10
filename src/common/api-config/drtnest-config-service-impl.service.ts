@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { ApiConfigService } from "./api.config.service";
-import { DrtnestConfigService } from "@terradharitri/sdk-nestjs-common";
+import { DrtnestConfigService } from "@sravankumar02/sdk-nestjs-common";
 
 @Injectable()
 export class DrtnestConfigServiceImpl implements DrtnestConfigService {

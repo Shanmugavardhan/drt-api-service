@@ -4,13 +4,16 @@ import { TransactionFilter } from "../transactions/entities/transaction.filter";
 import { TransactionType } from "../transactions/entities/transaction.type";
 import { Transaction } from "../transactions/entities/transaction";
 import { TransactionService } from "../transactions/transaction.service";
-import { ApiUtils } from "@terradharitri/sdk-nestjs-http";
+import { ApiUtils } from "@sravankumar02/sdk-nestjs-http";
 import { IndexerService } from "src/common/indexer/indexer.service";
 import { TransactionQueryOptions } from "../transactions/entities/transactions.query.options";
 import { TransactionDetailed } from "../transactions/entities/transaction.detailed";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 
 @Injectable()
 export class TransferService {
+  private readonly logger = new OriginLogger(TransferService.name);
+
   constructor(
     private readonly indexerService: IndexerService,
     @Inject(forwardRef(() => TransactionService))
@@ -18,9 +21,16 @@ export class TransferService {
   ) { }
 
   private sortElasticTransfers(elasticTransfers: any[]): any[] {
+    const transactionMap = new Map<string, any>();
+    for (const transfer of elasticTransfers) {
+      if (transfer.txHash) {
+        transactionMap.set(transfer.txHash, transfer);
+      }
+    }
+
     for (const elasticTransfer of elasticTransfers) {
       if (elasticTransfer.originalTxHash) {
-        const transaction = elasticTransfers.find(x => x.txHash === elasticTransfer.originalTxHash);
+        const transaction = transactionMap.get(elasticTransfer.originalTxHash);
         if (transaction) {
           elasticTransfer.order = (transaction.nonce * 10) + 1;
         } else {
@@ -31,20 +41,84 @@ export class TransferService {
       }
     }
 
-    elasticTransfers.sort((a, b) => {
-      if (a.timestamp !== b.timestamp) {
-        return b.timestamp - a.timestamp;
+    return elasticTransfers.sortedDescending(
+      (item) => item.timestamp,
+      (item) => item.order
+    );
+  }
+
+  private async sortElasticTransfersByTxsOrder(elasticTransfers: any[], miniBlockHash: string): Promise<any[]> {
+    if (!miniBlockHash) {
+      return this.sortElasticTransfers(elasticTransfers);
+    }
+
+    try {
+      const block = await this.indexerService.getBlockByMiniBlockHash(miniBlockHash);
+
+      if (!block || !block.miniBlocksDetails) {
+        return this.sortElasticTransfers(elasticTransfers);
       }
 
-      return b.order - a.order;
-    });
+      const miniBlockDetails = block.miniBlocksDetails.find((mb: any) => {
+        const miniBlockIndex = block.miniBlocksHashes?.indexOf(miniBlockHash);
+        return miniBlockIndex !== -1 && mb.mbIndex === miniBlockIndex;
+      });
 
-    return elasticTransfers;
+      if (!miniBlockDetails || !miniBlockDetails.executionOrderTxsIndices || !miniBlockDetails.txsHashes) {
+        return this.sortElasticTransfers(elasticTransfers);
+      }
+
+      const txHashToOrder: Record<string, number> = {};
+      for (let i = 0; i < miniBlockDetails.txsHashes.length; i++) {
+        const txHash = miniBlockDetails.txsHashes[i];
+        const executionIndex = miniBlockDetails.executionOrderTxsIndices[i];
+        txHashToOrder[txHash] = executionIndex;
+      }
+
+      const txHashToTransfer: Record<string, any> = {};
+      for (const transfer of elasticTransfers) {
+        if (transfer.txHash) {
+          txHashToTransfer[transfer.txHash] = transfer;
+        }
+      }
+
+      for (const elasticTransfer of elasticTransfers) {
+        const txHash = elasticTransfer.originalTxHash || elasticTransfer.txHash;
+        if (txHashToOrder.hasOwnProperty(txHash)) {
+          elasticTransfer.order = txHashToOrder[txHash];
+        } else {
+          if (elasticTransfer.originalTxHash) {
+            const transaction = txHashToTransfer[elasticTransfer.originalTxHash];
+            if (transaction) {
+              elasticTransfer.order = (transaction.nonce * 10) + 1;
+            } else {
+              elasticTransfer.order = 0;
+            }
+          } else {
+            elasticTransfer.order = elasticTransfer.nonce * 10;
+          }
+        }
+      }
+
+      return elasticTransfers.sortedDescending(
+        (item) => -item.order,
+        (item) => item.timestamp
+      );
+
+    } catch (error) {
+      this.logger.error(`Error getting block execution order: ${error}`);
+      return this.sortElasticTransfers(elasticTransfers);
+    }
   }
 
   async getTransfers(filter: TransactionFilter, pagination: QueryPagination, queryOptions: TransactionQueryOptions, fields?: string[]): Promise<Transaction[]> {
     let elasticOperations = await this.indexerService.getTransfers(filter, pagination);
-    elasticOperations = this.sortElasticTransfers(elasticOperations);
+
+    if (queryOptions.withTxsOrder && filter.miniBlockHash) {
+      elasticOperations = await this.sortElasticTransfersByTxsOrder(elasticOperations, filter.miniBlockHash);
+    } else {
+      elasticOperations = this.sortElasticTransfers(elasticOperations);
+    }
 
     let transactions: TransactionDetailed[] = [];
 
@@ -68,6 +142,13 @@ export class TransferService {
       transactions.push(transaction);
     }
 
+    const hasSenderFilter = filter.sender || (filter.senders && filter.senders.length > 0);
+    const hasReceiverFilter = filter.receivers && filter.receivers.length > 0;
+
+    if (filter.address && !hasSenderFilter && !hasReceiverFilter) {
+      transactions = this.transactionService.reorderAccountSentTransactionsByNonce(transactions, filter.address);
+    }
+
     if (queryOptions.withBlockInfo || (fields && fields.includesSome(['senderBlockHash', 'receiverBlockHash', 'senderBlockNonce', 'receiverBlockNonce']))) {
       await this.transactionService.applyBlockInfo(transactions);
     }
@@ -82,6 +163,8 @@ export class TransferService {
       withUsername: queryOptions.withUsername ?? false,
       withActionTransferValue: queryOptions.withActionTransferValue ?? false,
     });
+
+    this.transactionService.processRelayedInfo(transactions);
 
     return transactions;
   }

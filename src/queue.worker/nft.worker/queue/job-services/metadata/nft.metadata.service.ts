@@ -1,4 +1,4 @@
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Inject, Injectable } from "@nestjs/common";
 import { CacheInfo } from "src/utils/cache.info";
 import { PersistenceService } from "src/common/persistence/persistence.service";
@@ -6,7 +6,7 @@ import { Nft } from "src/endpoints/nfts/entities/nft";
 import { NftType } from "src/endpoints/nfts/entities/nft.type";
 import { NftExtendedAttributesService } from "src/endpoints/nfts/nft.extendedattributes.service";
 import { ClientProxy } from "@nestjs/microservices";
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { CachingUtils } from "src/utils/caching.utils";
 
 
@@ -65,7 +65,7 @@ export class NftMetadataService {
   }
 
   async getMetadataRaw(nft: Nft): Promise<any> {
-    if (!nft.attributes || nft.type === NftType.MetaDCDT) {
+    if (!nft.attributes) {
       return null;
     }
 

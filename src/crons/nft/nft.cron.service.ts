@@ -1,4 +1,4 @@
-import { Constants, Locker, OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { Constants, Locker, OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { Injectable } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { ApiConfigService } from "src/common/api-config/api.config.service";

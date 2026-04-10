@@ -2,7 +2,7 @@ import axios from 'axios';
 import { config } from '../config/env.config';
 import { fundAddress, sendTransaction, SendTransactionArgs } from './chain.simulator.operations';
 import { ChainSimulatorUtils } from './test.utils';
-import { BinaryUtils } from '@terradharitri/sdk-nestjs-common';
+import { BinaryUtils } from '@sravankumar02/sdk-nestjs-common';
 import * as fs from 'fs';
 import * as path from 'path';
 

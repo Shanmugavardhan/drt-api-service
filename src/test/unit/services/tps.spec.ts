@@ -1,5 +1,5 @@
 import { Test } from "@nestjs/testing";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { TpsUtils } from "src/utils/tps.utils";
 import { CacheInfo } from "src/utils/cache.info";
 import { TpsFrequency } from "src/endpoints/tps/entities/tps.frequency";

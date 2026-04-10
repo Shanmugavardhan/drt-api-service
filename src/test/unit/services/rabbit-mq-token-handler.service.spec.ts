@@ -1,4 +1,4 @@
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { TestingModule, Test } from "@nestjs/testing";
 import { NotifierEvent } from "src/common/rabbitmq/entities/notifier.event";
 import { RabbitMqTokenHandlerService } from "src/common/rabbitmq/rabbitmq.token.handler.service";

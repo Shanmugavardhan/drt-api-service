@@ -1,5 +1,5 @@
-import { ParseBlsHashPipe, ParseEnumPipe, ParseIntPipe } from "@terradharitri/sdk-nestjs-common";
-import { QueryConditionOptions } from "@terradharitri/sdk-nestjs-elastic";
+import { ParseBlsHashPipe, ParseEnumPipe, ParseIntPipe } from "@sravankumar02/sdk-nestjs-common";
+import { QueryConditionOptions } from "@sravankumar02/sdk-nestjs-elastic";
 import { Controller, DefaultValuePipe, Get, HttpException, HttpStatus, Param, Query } from "@nestjs/common";
 import { ApiExcludeEndpoint, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { Round } from "./entities/round";

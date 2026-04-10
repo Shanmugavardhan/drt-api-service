@@ -1,11 +1,11 @@
-import { CacheService, RedisCacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService, RedisCacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Injectable } from "@nestjs/common";
 import { CronExpression, SchedulerRegistry } from "@nestjs/schedule";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { GatewayService } from "src/common/gateway/gateway.service";
 import { ProtocolService } from "src/common/protocol/protocol.service";
 import { CacheInfo } from "src/utils/cache.info";
-import { Lock, OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { Lock, OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { CronJob } from "cron";
 import { TpsUtils } from "src/utils/tps.utils";
 import { TpsService } from "src/endpoints/tps/tps.service";

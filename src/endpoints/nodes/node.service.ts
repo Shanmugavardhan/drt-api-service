@@ -15,8 +15,8 @@ import { CacheInfo } from "src/utils/cache.info";
 import { Stake } from "../stake/entities/stake";
 import { GatewayComponentRequest } from "src/common/gateway/entities/gateway.component.request";
 import { Auction } from "src/common/gateway/entities/auction";
-import { AddressUtils, OriginLogger } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { AddressUtils, OriginLogger } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { NodeSort } from "./entities/node.sort";
 import { ProtocolService } from "src/common/protocol/protocol.service";
 import { KeysService } from "../keys/keys.service";
@@ -25,7 +25,7 @@ import { NodeAuction } from "./entities/node.auction";
 import { NodeAuctionFilter } from "./entities/node.auction.filter";
 import { Identity } from "../identities/entities/identity";
 import { NodeSortAuction } from "./entities/node.sort.auction";
-import { ApiService } from "@terradharitri/sdk-nestjs-http";
+import { ApiService } from "@sravankumar02/sdk-nestjs-http";
 
 @Injectable()
 export class NodeService {

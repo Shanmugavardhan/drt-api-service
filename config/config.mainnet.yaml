@@ -20,6 +20,12 @@ flags:
   processNfts: true
   collectionPropertiesFromGateway: false
 features:
+  websocketSubscription:
+    enabled: false
+    port: 6002
+    maxSubscriptionsPerInstance: 10000
+    maxSubscriptionsPerClient: 10
+    broadcastIntervalMs: 6000
   eventsNotifier:
     enabled: false
     port: 5674
@@ -46,7 +52,7 @@ features:
     serviceUrl: 'https://nfts-graph.dharitri.org/graphql'
   exchange:
     enabled: false
-    serviceUrl: 'https://graph.dharitrix.org/graphql'
+    serviceUrl: 'https://graph.dharitrix.com/graphql'
   dataApi:
     enabled: false
     serviceUrl: 'https://data-api.dharitri.org'
@@ -63,8 +69,18 @@ features:
     cronExpression: '*/5 * * * * *'
     activationEpoch: 1391
   chainAndromeda:
-    enabled: false
-    activationEpoch: 4
+    enabled: true
+    activationEpoch: 1763
+  stakingV5:
+    enabled: true
+    activationEpoch: 1951
+  chainBarnard:
+    enabled: true
+    activationEpoch: 1820
+    activationTimestamp: 1753376544
+  deprecatedRelayedV1V2:
+    enabled: true
+    activationEpoch: 1918
   nodeEpochsLeft:
     enabled: false
   transactionProcessor:
@@ -80,6 +96,13 @@ features:
   deepHistory:
     enabled: false
     url: ''
+  elasticCircuitBreaker:
+    enabled: false
+    durationThresholdMs: 5000
+    failureCountThreshold: 5
+    resetTimeoutMs: 30000
+  elasticMigratedIndices:
+    logs: 'events'
   statusChecker:
     enabled: false
     thresholds:
@@ -101,21 +124,17 @@ features:
     enabled: false
     maxLookBehindNonces: 100
   nodesFetch:
-    enabled: true
+    enabled: false
     serviceUrl: 'https://api.dharitri.org'
   tokensFetch:
-    enabled: true
+    enabled: false
     serviceUrl: 'https://api.dharitri.org'
   providersFetch:
-    enabled: true
+    enabled: false
     serviceUrl: 'https://api.dharitri.org'
   assetsFetch:
     enabled: true
-    assetesUrl: 'https://tools.dharitri.org/assets-cdn'
-  mediaRedirect:
-    enabled: false
-    storageUrls:
-      - 'https://s3.amazonaws.com/media.dharitri.org'
+    assetsUrl: 'https://tools.dharitri.org/assets-cdn'
 image:
   width: 600
   height: 600
@@ -123,8 +142,9 @@ image:
 aws:
   s3KeyId: ''
   s3Secret: ''
-  s3Bucket: 'media.dharitri.org'
+  s3Bucket: 'media.numbat.com'
   s3Region: ''
+  s3Endpoint: ''
 urls:
   self: 'https://api.dharitri.org'
   elastic:
@@ -136,8 +156,7 @@ urls:
   rabbitmq: 'amqp://127.0.0.1:5672'
   providers: 'https://delegation-api.dharitri.org/providers'
   delegation: 'https://delegation-api.dharitri.org'
-  media: 'https://media.dharitri.org'
-  nftThumbnails: 'https://media.dharitri.org/nfts/thumbnail'
+  media: 'https://media.numbat.com'
   tmp: '/tmp'
   ipfs: 'https://ipfs.io/ipfs'
   socket: 'socket-api-fra.dharitri.org'
@@ -163,10 +182,10 @@ keepAliveTimeout:
   downstream: 61000
   upstream: 60000
 contracts:
-  dcdt: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2'
-  auction: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf'
-  staking: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqqllls9k7r6g'
-  delegationManager: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqyllls4jxmwv'
+  dcdt: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez'
+  auction: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp'
+  staking: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqlllsjr0pnq'
+  delegationManager: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllsz8he8y'
   delegation: 'drt1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q8vqld4'
   metabonding: 'drt1qqqqqqqqqqqqqpgq50dge6rrpcra4tp9hl57jl0893a4r2r72jpstdjq3v'
 inflation:
@@ -177,6 +196,19 @@ inflation:
   - 1130177
   - 924690
   - 719203
+stakingV5Inflation:
+  - 1262802
+# december 2025 mainnet supply: 28_840_981. first year rewards = 50% * (8.75% * supply) = 1262802
+# TODO: calculate the inflation for upcoming years based on the inflation decay
 nftProcess:
   parallelism: 1
   maxRetries: 3
+compression:
+  enabled: true
+  level: 6
+  threshold: 1024
+  chunkSize: 16384
+customUrlHeaders:
+  - urlPattern: ''
+    headers:
+      x-custom-auth: ''

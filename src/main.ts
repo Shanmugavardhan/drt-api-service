@@ -8,8 +8,6 @@ import { PrivateAppModule } from './private.app.module';
 import { CacheWarmerModule } from './crons/cache.warmer/cache.warmer.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { INestApplication, Logger, NestInterceptor } from '@nestjs/common';
-import * as bodyParser from 'body-parser';
-import * as requestIp from 'request-ip';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { RedisClient } from 'redis';
 import { TransactionProcessorModule } from './crons/transaction.processor/transaction.processor.module';
@@ -21,20 +19,25 @@ import { PluginService } from './common/plugins/plugin.service';
 import { TransactionCompletedModule } from './crons/transaction.processor/transaction.completed.module';
 import { SocketAdapter } from './common/websockets/socket-adapter';
 import { ApiConfigModule } from './common/api-config/api.config.module';
-import { CacheService, CachingInterceptor, GuestCacheInterceptor, GuestCacheService } from '@terradharitri/sdk-nestjs-cache';
-import { LoggerInitializer } from '@terradharitri/sdk-nestjs-common';
-import { MetricsService, RequestCpuTimeInterceptor, LoggingInterceptor, LogRequestsInterceptor } from '@terradharitri/sdk-nestjs-monitoring';
-import { FieldsInterceptor, ExtractInterceptor, CleanupInterceptor, PaginationInterceptor, QueryCheckInterceptor, ComplexityInterceptor, OriginInterceptor, ExcludeFieldsInterceptor } from '@terradharitri/sdk-nestjs-http';
+import { CacheService, CachingInterceptor, GuestCacheInterceptor, GuestCacheService } from '@sravankumar02/sdk-nestjs-cache';
+import { LoggerInitializer } from '@sravankumar02/sdk-nestjs-common';
+import { MetricsService, RequestCpuTimeInterceptor, LoggingInterceptor, LogRequestsInterceptor } from '@sravankumar02/sdk-nestjs-monitoring';
+import { FieldsInterceptor, ExtractInterceptor, CleanupInterceptor, PaginationInterceptor, QueryCheckInterceptor, ComplexityInterceptor, OriginInterceptor, ExcludeFieldsInterceptor } from '@sravankumar02/sdk-nestjs-http';
 import { DrtnestConfigServiceImpl } from './common/api-config/drtnest-config-service-impl.service';
 import { RabbitMqModule } from './common/rabbitmq/rabbitmq.module';
 import { TransactionLoggingInterceptor } from './interceptors/transaction.logging.interceptor';
 import { BatchTransactionProcessorModule } from './crons/transaction.processor/batch.transaction.processor.module';
 import { SettingsService } from './common/settings/settings.service';
 import { StatusCheckerModule } from './crons/status.checker/status.checker.module';
-import { JwtOrNativeAuthGuard } from '@terradharitri/sdk-nestjs-auth';
+import { JwtOrNativeAuthGuard } from '@sravankumar02/sdk-nestjs-auth';
 import { WebSocketPublisherModule } from './common/websockets/web-socket-publisher-module';
 import { IndexerService } from './common/indexer/indexer.service';
 import { NotWritableError } from './common/indexer/entities/not.writable.error';
+import * as bodyParser from 'body-parser';
+import * as requestIp from 'request-ip';
+import compression from 'compression';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { WebsocketSubscriptionModule } from './crons/websocket/websocket.subscription.module';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrapper');
@@ -84,6 +87,13 @@ async function bootstrap() {
   if (apiConfigService.getIsTransactionProcessorCronActive()) {
     const processorApp = await NestFactory.create(TransactionProcessorModule);
     await processorApp.listen(5001);
+  }
+
+
+  if (apiConfigService.getIsWebsocketSubscriptionActive()) {
+    const websocketSubscriptionApp = await NestFactory.create(WebsocketSubscriptionModule);
+    websocketSubscriptionApp.useWebSocketAdapter(new IoAdapter(websocketSubscriptionApp));
+    await websocketSubscriptionApp.listen(apiConfigService.getWebsocketSubscriptionPort());
   }
 
   if (apiConfigService.getIsCacheWarmerCronActive()) {
@@ -167,6 +177,7 @@ async function bootstrap() {
   logger.log(`Exchange feature active: ${apiConfigService.isExchangeEnabled()}`);
   logger.log(`Marketplace feature active: ${apiConfigService.isMarketplaceFeatureEnabled()}`);
   logger.log(`Auth active: ${apiConfigService.getIsAuthActive()}`);
+  logger.log(`WebSocket subscription active: ${apiConfigService.getIsWebsocketSubscriptionActive()}`);
 
   logger.log(`Use tracing: ${apiConfigService.getUseTracingFlag()}`);
   logger.log(`Process NFTs flag: ${apiConfigService.getIsProcessNftsFlagActive()}`);
@@ -178,6 +189,21 @@ async function bootstrap() {
 }
 
 async function configurePublicApp(publicApp: NestExpressApplication, apiConfigService: ApiConfigService) {
+  if (apiConfigService.getCompressionEnabled()) {
+    publicApp.use(compression({
+      filter: (req: any, res: any) => {
+        if (req.headers['x-no-compression']) {
+          return false;
+        }
+        return compression.filter(req, res);
+      },
+      level: apiConfigService.getCompressionLevel(),
+      threshold: apiConfigService.getCompressionThreshold(),
+      memLevel: 8,
+      chunkSize: apiConfigService.getCompressionChunkSize(),
+    }));
+  }
+
   publicApp.use(bodyParser.json({ limit: '1mb' }));
   publicApp.use(requestIp.mw());
   publicApp.enableCors();
@@ -297,6 +323,10 @@ async function configurePublicApp(publicApp: NestExpressApplication, apiConfigSe
   logger.log(`Use request caching: ${await settingsService.getUseRequestCachingFlag()}`);
   logger.log(`Use request logging: ${await settingsService.getUseRequestLoggingFlag()}`);
   logger.log(`Use vm query tracing: ${await settingsService.getUseVmQueryTracingFlag()}`);
+  logger.log(`Compression enabled: ${apiConfigService.getCompressionEnabled()}`);
+  if (apiConfigService.getCompressionEnabled()) {
+    logger.log(`Compression level: ${apiConfigService.getCompressionLevel()} (threshold: ${apiConfigService.getCompressionThreshold()} bytes)`);
+  }
 }
 
 async function configureCacheWarmerApp(cacheWarmerApp: INestApplication<any>, apiConfigService: ApiConfigService): Promise<void> {

@@ -1,5 +1,5 @@
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
-import { MetricsService } from "@terradharitri/sdk-nestjs-monitoring";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
+import { MetricsService } from "@sravankumar02/sdk-nestjs-monitoring";
 import { Test } from "@nestjs/testing";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { AssetsService } from "src/common/assets/assets.service";
@@ -211,7 +211,7 @@ describe('DcdtAddressService', () => {
         },
       };
 
-      jest.spyOn(cacheService, 'getLocal').mockResolvedValue(cachedDcdts);
+      jest.spyOn(cacheService, 'getLocal').mockReturnValue(cachedDcdts);
       jest.spyOn(metricsService, 'incrementCachedApiHit');
 
       const result = await service.getAllDcdtsForAddressFromGateway(address);
@@ -224,7 +224,7 @@ describe('DcdtAddressService', () => {
       const address = 'some-address';
       const ttl = 1000;
 
-      jest.spyOn(cacheService, 'getLocal').mockResolvedValueOnce(null);
+      jest.spyOn(cacheService, 'getLocal').mockReturnValueOnce(null);
       jest.spyOn(cacheService, 'setLocal');
       jest.spyOn(protocolService, 'getSecondsRemainingUntilNextRound').mockResolvedValue(ttl);
 

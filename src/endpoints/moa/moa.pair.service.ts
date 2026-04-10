@@ -1,5 +1,5 @@
-import { Constants } from '@terradharitri/sdk-nestjs-common';
-import { CacheService } from '@terradharitri/sdk-nestjs-cache';
+import { Constants } from '@sravankumar02/sdk-nestjs-common';
+import { CacheService } from '@sravankumar02/sdk-nestjs-cache';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CacheInfo } from 'src/utils/cache.info';
 import { GraphQlService } from 'src/common/graphql/graphql.service';
@@ -7,7 +7,7 @@ import { MoaPair } from './entities/moa.pair';
 import { MoaPairState } from './entities/moa.pair.state';
 import { MoaPairType } from './entities/moa.pair.type';
 import { MoaSettingsService } from './moa.settings.service';
-import { OriginLogger } from '@terradharitri/sdk-nestjs-common';
+import { OriginLogger } from '@sravankumar02/sdk-nestjs-common';
 import { ApiConfigService } from 'src/common/api-config/api.config.service';
 import { MoaPairExchange } from './entities/moa.pair.exchange';
 import { MoaPairsFilter } from './entities/moa.pairs..filter';

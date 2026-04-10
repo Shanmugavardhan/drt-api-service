@@ -47,7 +47,7 @@ features:
     serviceUrl: 'https://devnet-old-nfts-graph.dharitri.org/graphql'
   exchange:
     enabled: false
-    serviceUrl: 'https://devnet-old-graph.dharitrix.org/graphql'
+    serviceUrl: 'https://devnet-old-graph.dharitrix.com/graphql'
   dataApi:
     enabled: false
     serviceUrl: 'https://devnet-old-data-api.dharitri.org'
@@ -61,6 +61,10 @@ features:
     jwtSecret: ''
   nodeEpochsLeft:
     enabled: false
+  chainBarnard:
+    enabled: false
+    activationEpoch: 3964
+    activationTimestamp: 1751460236
 image:
   width: 600
   height: 600
@@ -68,8 +72,9 @@ image:
 aws:
   s3KeyId: ''
   s3Secret: ''
-  s3Bucket: 'devnet-old-media.dharitri.org'
+  s3Bucket: 'devnet-old-media.numbat.com'
   s3Region: ''
+  s3Endpoint: ''
 urls:
   self: 'https://devnet-old-api.dharitri.org'
   elastic:
@@ -81,8 +86,7 @@ urls:
   rabbitmq: 'amqp://127.0.0.1:5672'
   providers: 'https://devnet-old-delegation-api.dharitri.org/providers'
   delegation: 'https://devnet-old-delegation-api.dharitri.org'
-  media: 'https://devnet-old-media.dharitri.org'
-  nftThumbnails: 'https://devnet-old-media.dharitri.org/nfts/thumbnail'
+  media: 'https://devnet-old-media.numbat.com'
   tmp: '/tmp'
   ipfs: 'https://ipfs.io/ipfs'
   socket: 'devnet-socket-api.dharitri.org'
@@ -108,10 +112,10 @@ keepAliveTimeout:
   downstream: 61000
   upstream: 60000
 contracts:
-  dcdt: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2'
-  auction: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf'
-  staking: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqqllls9k7r6g'
-  delegationManager: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqyllls4jxmwv'
+  dcdt: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez'
+  auction: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp'
+  staking: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqlllsjr0pnq'
+  delegationManager: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllsz8he8y'
   delegation: 'drt1qqqqqqqqqqqqqpgqp699jngundfqw07d8jzkepucvpzush6k3wvqeyzkqc'
   metabonding: 'drt1qqqqqqqqqqqqqpgqkg7we73j769ew5we4yyx7uyvnn0nefqgd8ssxxm3m5'
 inflation:

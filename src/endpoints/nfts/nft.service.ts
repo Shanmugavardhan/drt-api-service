@@ -18,9 +18,9 @@ import { DcdtDataSource } from "../dcdt/entities/dcdt.data.source";
 import { DcdtAddressService } from "../dcdt/dcdt.address.service";
 import { PersistenceService } from "src/common/persistence/persistence.service";
 import { MoaTokenService } from "../moa/moa.token.service";
-import { BinaryUtils, NumberUtils, RecordUtils, BatchUtils, TokenUtils, OriginLogger } from "@terradharitri/sdk-nestjs-common";
-import { ApiUtils } from "@terradharitri/sdk-nestjs-http";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { BinaryUtils, NumberUtils, RecordUtils, BatchUtils, TokenUtils, OriginLogger } from "@sravankumar02/sdk-nestjs-common";
+import { ApiUtils } from "@sravankumar02/sdk-nestjs-http";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { IndexerService } from "src/common/indexer/indexer.service";
 import { LockedAssetService } from "../../common/locked-asset/locked-asset.service";
 import { CollectionAccount } from "../collections/entities/collection.account";
@@ -31,6 +31,7 @@ import { SortCollectionNfts } from "../collections/entities/sort.collection.nfts
 import { TokenAssets } from "src/common/assets/entities/token.assets";
 import { ScamInfo } from "src/common/entities/scam-info.dto";
 import { NftSubType } from "./entities/nft.sub.type";
+import { ConcurrencyUtils } from "src/utils/concurrency.utils";
 
 @Injectable()
 export class NftService {
@@ -65,39 +66,31 @@ export class NftService {
   }
 
   async getNfts(queryPagination: QueryPagination, filter: NftFilter, queryOptions?: NftQueryOptions): Promise<Nft[]> {
+    if (this.isCacheableNftList(filter, queryOptions)) {
+      const cacheInfo = CacheInfo.Nfts(queryPagination);
+      return await this.cachingService.getOrSet(
+        cacheInfo.key,
+        () => this.fetchAndProcessNfts(queryPagination, filter, queryOptions),
+        cacheInfo.ttl,
+      );
+    }
+
+    return await this.fetchAndProcessNfts(queryPagination, filter, queryOptions);
+  }
+
+  private async fetchAndProcessNfts(queryPagination: QueryPagination, filter: NftFilter, queryOptions?: NftQueryOptions): Promise<Nft[]> {
     const { from, size } = queryPagination;
 
     const nfts = await this.getNftsInternal({ from, size }, filter);
 
-    for (const nft of nfts) {
-      await this.applyAssetsAndTicker(nft);
-    }
+    await Promise.all([
+      this.conditionallyApplyAssetsAndTicker(nfts, undefined, queryOptions),
+      this.conditionallyApplyOwners(nfts, queryOptions),
+      this.conditionallyApplySupply(nfts, queryOptions),
+      this.batchProcessNfts(nfts),
+    ]);
 
-    if (queryOptions && queryOptions.withOwner) {
-      const nftsIdentifiers = nfts.filter(x => x.type === NftType.NonFungibleDCDT).map(x => x.identifier);
-
-      const accountsDcdts = await this.getAccountDcdtByIdentifiers(nftsIdentifiers, { from: 0, size: nftsIdentifiers.length });
-
-      for (const nft of nfts) {
-        if (nft.type === NftType.NonFungibleDCDT) {
-          const accountDcdt = accountsDcdts.find((accountDcdt: any) => accountDcdt.identifier == nft.identifier);
-          if (accountDcdt) {
-            nft.owner = accountDcdt.address;
-          }
-        }
-      }
-    }
-
-    if (queryOptions && queryOptions.withSupply) {
-      const supplyNfts = nfts.filter(nft => nft.type.in(NftType.SemiFungibleDCDT, NftType.MetaDCDT));
-      await this.batchApplySupply(supplyNfts);
-    }
-
-    await this.batchProcessNfts(nfts);
-
-    for (const nft of nfts) {
-      await this.applyUnlockFields(nft);
-    }
+    await this.batchApplyUnlockFields(nfts);
 
     return nfts;
   }
@@ -107,6 +100,71 @@ export class NftService {
       this.batchApplyMedia(nfts, fields),
       this.batchApplyMetadata(nfts, fields),
     ]);
+  }
+
+  private async conditionallyApplyAssetsAndTicker(nfts: Nft[], fields?: string[], queryOptions?: { withAssets?: boolean }): Promise<void> {
+    if (fields && fields.includesNone(['ticker', 'assets'])) {
+      return;
+    }
+
+    const allAssets = await this.assetsService.getAllTokenAssets();
+    if (queryOptions?.withAssets === false) {
+      return;
+    }
+
+    for (const nft of nfts) {
+      nft.assets = allAssets[nft.identifier] ?? allAssets[nft.collection];
+
+      if (nft.assets) {
+        nft.ticker = nft.collection.split('-')[0];
+      } else {
+        nft.ticker = nft.collection;
+      }
+    }
+  }
+
+  private async conditionallyApplyOwners(nfts: Nft[], queryOptions?: NftQueryOptions): Promise<void> {
+    if (!queryOptions?.withOwner) {
+      return;
+    }
+
+    const nftsIdentifiers = nfts
+      .filter(x => x.type === NftType.NonFungibleDCDT)
+      .map(x => x.identifier);
+
+    if (nftsIdentifiers.length === 0) {
+      return;
+    }
+
+    const ownerMap = await this.getOwnersBulk(nftsIdentifiers);
+
+    for (const nft of nfts) {
+      if (nft.type === NftType.NonFungibleDCDT && ownerMap[nft.identifier]) {
+        nft.owner = ownerMap[nft.identifier];
+      }
+    }
+  }
+
+  private async conditionallyApplySupply(nfts: Nft[], queryOptions?: NftQueryOptions): Promise<void> {
+    if (!queryOptions?.withSupply) {
+      return;
+    }
+
+    const supplyNfts = nfts.filter(nft => nft.type.in(NftType.SemiFungibleDCDT, NftType.MetaDCDT));
+
+    if (supplyNfts.length > 0) {
+      await this.batchApplySupply(supplyNfts);
+    }
+  }
+
+  private async batchApplyUnlockFields(nfts: Nft[], fields?: string[]): Promise<void> {
+    if (fields && fields.includesNone(['unlockSchedule', 'unlockEpoch'])) {
+      return;
+    }
+
+    await Promise.all(
+      nfts.map(nft => this.applyUnlockFields(nft, fields))
+    );
   }
 
   private async applyNftOwner(nft: Nft): Promise<void> {
@@ -130,6 +188,29 @@ export class NftService {
       (nft, value) => nft.supply = value.totalSupply,
       CacheInfo.TokenSupply('').ttl,
     );
+  }
+
+  private async getOwnersBulk(identifiers: string[], chunkSize: number = 512, concurrencyLimit: number = 4): Promise<Record<string, string>> {
+    if (identifiers.length === 0) {
+      return {};
+    }
+
+    const chunks = BatchUtils.splitArrayIntoChunks(identifiers.distinct(), chunkSize);
+    const results = await ConcurrencyUtils.executeWithConcurrencyLimit(
+      chunks,
+      async (chunk) => await this.getAccountDcdtByIdentifiers(chunk, { from: 0, size: chunk.length }),
+      concurrencyLimit,
+      'NftService.getOwnersBulk'
+    );
+
+    const ownerMap: Record<string, string> = {};
+    for (const chunkResult of results) {
+      for (const accountDcdt of chunkResult ?? []) {
+        ownerMap[accountDcdt.identifier] = accountDcdt.address;
+      }
+    }
+
+    return ownerMap;
   }
 
   private async batchApplyMedia(nfts: Nft[], fields?: string[]) {
@@ -219,22 +300,28 @@ export class NftService {
       return undefined;
     }
 
-    if (nft.type && nft.type.in(
-      NftType.SemiFungibleDCDT, NftType.MetaDCDT,
-      NftSubType.DynamicSemiFungibleDCDT, NftSubType.DynamicMetaDCDT
-    )) {
-      await this.applySupply(nft);
-    }
+    const types = [
+      NftType.SemiFungibleDCDT,
+      NftType.MetaDCDT,
+      NftSubType.DynamicSemiFungibleDCDT,
+      NftSubType.DynamicMetaDCDT,
+    ];
 
-    await this.applyNftOwner(nft);
-
-    await this.applyNftAttributes(nft);
-
-    await this.applyAssetsAndTicker(nft);
+    await Promise.all([
+      (async () => {
+        if (nft.type && types.includes(nft.type as NftType | NftSubType)) {
+          await this.applySupply(nft);
+        }
+      })(),
+      this.applyAssetsAndTicker(nft),
+      this.processNft(nft),
+      (async () => {
+        await this.applyNftOwner(nft);
+        await this.applyNftAttributes(nft);
+      })(),
+    ]);
 
     await this.applyUnlockFields(nft);
-
-    await this.processNft(nft);
 
     return nft;
   }
@@ -268,12 +355,20 @@ export class NftService {
       return;
     }
 
-    const nftsForAddress = await this.dcdtAddressService.getNftsForAddress(nft.owner, new NftFilter({ identifiers: [nft.identifier] }), new QueryPagination({ from: 0, size: 1 }));
-    if (nftsForAddress.length === 0) {
-      return;
+    let attributes = nft.attributes;
+    if (!attributes || attributes.length === 0) {
+      const nftsForAddress = await this.dcdtAddressService.getNftsForAddress(nft.owner, new NftFilter({ identifiers: [nft.identifier] }), new QueryPagination({
+        from: 0,
+        size: 1,
+      }));
+      if (nftsForAddress.length === 0) {
+        return;
+      }
+
+      attributes = nftsForAddress[0].attributes;
     }
 
-    nft.attributes = nftsForAddress[0].attributes;
+    nft.attributes = attributes;
   }
 
   private async applyMedia(nft: Nft) {
@@ -397,8 +492,6 @@ export class NftService {
           nft.decimals = collectionProperties.decimals;
           // @ts-ignore
           delete nft.royalties;
-          // @ts-ignore
-          delete nft.uris;
         }
       }
     }
@@ -447,15 +540,24 @@ export class NftService {
   }
 
   async getNftCount(filter: NftFilter): Promise<number> {
+    if (this.isCacheableNftCount(filter)) {
+      return await this.cachingService.getOrSet(
+        CacheInfo.NftsCount.key,
+        async () => await this.indexerService.getNftCount(filter),
+        CacheInfo.NftsCount.ttl,
+      );
+    }
+
     return await this.indexerService.getNftCount(filter);
   }
 
   async getNftsForAddress(address: string, queryPagination: QueryPagination, filter: NftFilter, fields?: string[], queryOptions?: NftQueryOptions, source?: DcdtDataSource): Promise<NftAccount[]> {
     let nfts = await this.dcdtAddressService.getNftsForAddress(address, filter, queryPagination, source, queryOptions);
-    for (const nft of nfts) {
+
+    await Promise.all(nfts.map(async (nft) => {
       await this.applyAssetsAndTicker(nft, fields);
       await this.applyPriceUsd(nft, fields);
-    }
+    }));
 
     if (queryOptions && queryOptions.withSupply) {
       const supplyNfts = nfts.filter(nft => nft.type.in(NftType.SemiFungibleDCDT, NftType.MetaDCDT));
@@ -487,23 +589,24 @@ export class NftService {
 
     nfts = this.applyScamFilter(nfts, filter);
 
-    for (const nft of nfts) {
-      await this.applyUnlockFields(nft, fields);
-    }
+    await Promise.all(nfts.map(nft => this.applyUnlockFields(nft, fields)));
 
     return nfts;
   }
 
   private async getNftsInternalByIdentifiers(identifiers: string[]): Promise<Nft[]> {
-    const chunks = BatchUtils.splitArrayIntoChunks(identifiers, 1024);
-    const result: Nft[] = [];
-    for (const identifiers of chunks) {
-      const internalNfts = await this.getNftsInternal(new QueryPagination({ from: 0, size: identifiers.length }), new NftFilter({ identifiers }));
+    const chunks = BatchUtils.splitArrayIntoChunks(identifiers, 512);
+    const results = await ConcurrencyUtils.executeWithConcurrencyLimit(
+      chunks,
+      async (chunk) => await this.getNftsInternal(
+        new QueryPagination({ from: 0, size: chunk.length }),
+        new NftFilter({ identifiers: chunk })
+      ),
+      4,
+      'NftService.getNftsInternalByIdentifiers'
+    );
 
-      result.push(...internalNfts);
-    }
-
-    return result;
+    return results.flat();
   }
 
   private async applyPriceUsd(nft: NftAccount, fields?: string[]) {
@@ -652,31 +755,63 @@ export class NftService {
   }
 
   private applyRedirectMedia(nft: Nft) {
-    // FIXME: This is a temporary fix to avoid breaking the API
-    const isMediaRedirectFeatureEnabled = this.apiConfigService.isMediaRedirectFeatureEnabled();
-    if (!isMediaRedirectFeatureEnabled) {
-      // return;
-    }
-
-    if (!nft.media || nft.media.length === 0) {
+    if (!nft.media || !Array.isArray(nft.media) || nft.media.length === 0) {
       return;
     }
 
     try {
       const network = this.apiConfigService.getNetwork();
-      // const defaultMediaUrl = `https://${network === 'mainnet' ? '' : `${network}-`}media.dharitri.org`;
-      const defaultMediaUrl = `https://${network === 'mainnet' ? '' : `${network}-`}api.dharitri.org/media`;
+      const defaultMediaUrl = `https://${network === 'mainnet' ? '' : `${network}-`}media.numbat.com`;
+      const defaultApiMediaUrl = `https://${network === 'mainnet' ? '' : `${network}-`}api.dharitri.org/media`;
 
       for (const media of nft.media) {
         if (media.url) {
-          media.url = media.url.replace(defaultMediaUrl, this.apiConfigService.getMediaUrl());
+          media.url = ApiUtils.replaceUri(media.url, defaultMediaUrl, this.apiConfigService.getMediaUrl());
+          media.url = ApiUtils.replaceUri(media.url, defaultApiMediaUrl, this.apiConfigService.getMediaUrl());
         }
         if (media.thumbnailUrl) {
-          media.thumbnailUrl = media.thumbnailUrl.replace(defaultMediaUrl, this.apiConfigService.getMediaUrl());
+          media.thumbnailUrl = ApiUtils.replaceUri(media.thumbnailUrl, defaultMediaUrl, this.apiConfigService.getMediaUrl());
+          media.thumbnailUrl = ApiUtils.replaceUri(media.thumbnailUrl, defaultApiMediaUrl, this.apiConfigService.getMediaUrl());
         }
       }
-    } catch {
-      // TODO: there are some cases where the nft.media is an empty object, we should investigate why
+    } catch (error) {
+      this.logger.error(`Error when applying redirect media for NFT with identifier '${nft.identifier}'`);
+      this.logger.error(error);
     }
+  }
+
+  private isDefaultNftFilter(filter: NftFilter): boolean {
+    return !filter.search &&
+      !(filter.identifiers && filter.identifiers.length > 0) &&
+      !(filter.type && filter.type.length > 0) &&
+      !(filter.subType && filter.subType.length > 0) &&
+      !filter.collection &&
+      !(filter.collections && filter.collections.length > 0) &&
+      !(filter.tags && filter.tags.length > 0) &&
+      !filter.name &&
+      !filter.creator &&
+      filter.hasUris === undefined &&
+      filter.includeFlagged === undefined &&
+      filter.before === undefined &&
+      filter.after === undefined &&
+      filter.nonceBefore === undefined &&
+      filter.nonceAfter === undefined &&
+      filter.isWhitelistedStorage === undefined &&
+      filter.isNsfw === undefined &&
+      filter.isScam === undefined &&
+      filter.scamType === undefined &&
+      !filter.traits &&
+      filter.excludeMetaDCDT === undefined &&
+      filter.sort === undefined &&
+      filter.order === undefined;
+  }
+
+  private isCacheableNftList(filter: NftFilter, queryOptions?: NftQueryOptions): boolean {
+    const hasHeavyOptions = queryOptions?.withOwner || queryOptions?.withSupply;
+    return !hasHeavyOptions && this.isDefaultNftFilter(filter);
+  }
+
+  private isCacheableNftCount(filter: NftFilter): boolean {
+    return this.isDefaultNftFilter(filter);
   }
 }

@@ -8,6 +8,7 @@ import { CollectionModule } from "../collections/collection.module";
 import { TransactionModule } from "../transactions/transaction.module";
 import { MoaModule } from "../moa/moa.module";
 import { AssetsModule } from "src/common/assets/assets.module";
+import { PluginModule } from "../../plugins/plugin.module";
 
 
 @Module({
@@ -19,6 +20,7 @@ import { AssetsModule } from "src/common/assets/assets.module";
     forwardRef(() => TransactionModule),
     forwardRef(() => MoaModule.forRoot()),
     forwardRef(() => AssetsModule),
+    forwardRef(() => PluginModule),
   ],
   providers: [
     DcdtService, DcdtAddressService,

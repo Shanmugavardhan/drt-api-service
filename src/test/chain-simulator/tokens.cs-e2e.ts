@@ -303,7 +303,7 @@ describe('Tokens e2e tests with chain simulator', () => {
 
     it('should return filtered transfers by receiver', async () => {
       const sender =
-        'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2';
+        'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez';
       const tokensResponse = await axios.get(
         `${config.apiServiceUrl}/tokens?size=1`,
       );
@@ -372,7 +372,7 @@ describe('Tokens e2e tests with chain simulator', () => {
 
     it('should return filtered transfer count by sender', async () => {
       const sender =
-        'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqzlllsd5j0s2';
+        'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls6prdez';
       const tokensResponse = await axios.get(
         `${config.apiServiceUrl}/tokens?size=1`,
       );

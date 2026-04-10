@@ -4,7 +4,7 @@ import { Transaction } from './transaction';
 import { TransactionReceipt } from './transaction.receipt';
 import { TransactionLog } from './transaction.log';
 import { TransactionOperation } from './transaction.operation';
-import { ComplexityEstimation } from '@terradharitri/sdk-nestjs-common';
+import { ComplexityEstimation } from '@sravankumar02/sdk-nestjs-common';
 export class TransactionDetailed extends Transaction {
   constructor(init?: Partial<TransactionDetailed>) {
     super();

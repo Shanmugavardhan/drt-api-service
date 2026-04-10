@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpException, Param, Post, Req } from "@nestjs/common";
 import { ApiExcludeController, ApiTags } from "@nestjs/swagger";
 import { Request } from "express";
-import { ApiService, DisableFieldsInterceptorOnController } from "@terradharitri/sdk-nestjs-http";
+import { ApiService, DisableFieldsInterceptorOnController } from "@sravankumar02/sdk-nestjs-http";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 
 @Controller('index')

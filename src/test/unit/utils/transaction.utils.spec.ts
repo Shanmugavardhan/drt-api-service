@@ -12,7 +12,7 @@ import { TransactionOperationAction } from "src/endpoints/transactions/entities/
 import { TransactionOperationType } from "src/endpoints/transactions/entities/transaction.operation.type";
 import { DcdtType } from "src/endpoints/dcdt/entities/dcdt.type";
 import { TransactionUtils } from "src/endpoints/transactions/transaction.utils";
-import '@terradharitri/sdk-nestjs-common/lib/utils/extensions/array.extensions';
+import '@sravankumar02/sdk-nestjs-common/lib/utils/extensions/array.extensions';
 
 describe('Transaction Utils', () => {
   it('tryExtractCollectionIdentifierFromChangeSftToMetaDcdTransaction', () => {

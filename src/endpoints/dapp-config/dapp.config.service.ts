@@ -1,4 +1,4 @@
-import { FileUtils } from "@terradharitri/sdk-nestjs-common";
+import { FileUtils } from "@sravankumar02/sdk-nestjs-common";
 import { Injectable } from "@nestjs/common";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { DappConfig } from "./entities/dapp-config";

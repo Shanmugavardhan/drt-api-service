@@ -15,13 +15,14 @@ import { TransferService } from '../transfers/transfer.service';
 import { TransactionType } from '../transactions/entities/transaction.type';
 import { AssetsService } from 'src/common/assets/assets.service';
 import { TransactionFilter } from '../transactions/entities/transaction.filter';
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
-import { AddressUtils, BinaryUtils, OriginLogger } from '@terradharitri/sdk-nestjs-common';
-import { ApiService, ApiUtils } from "@terradharitri/sdk-nestjs-http";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
+import { AddressUtils, BinaryUtils, OriginLogger } from '@sravankumar02/sdk-nestjs-common';
+import { ApiService, ApiUtils } from "@sravankumar02/sdk-nestjs-http";
 import { GatewayService } from 'src/common/gateway/gateway.service';
 import { IndexerService } from "src/common/indexer/indexer.service";
 import { AccountAssets } from 'src/common/assets/entities/account.assets';
 import { CacheInfo } from 'src/utils/cache.info';
+import { ConcurrencyUtils } from 'src/utils/concurrency.utils';
 import { UsernameService } from '../usernames/username.service';
 import { ContractUpgrades } from './entities/contract.upgrades';
 import { AccountVerification } from './entities/account.verification';
@@ -99,6 +100,9 @@ export class AccountService {
     if (options?.withTimestamp) {
       const elasticSearchAccount = await this.indexerService.getAccount(address);
       account.timestamp = elasticSearchAccount.timestamp;
+      if (elasticSearchAccount.timestampMs) {
+        account.timestampMs = elasticSearchAccount.timestampMs;
+      }
     }
 
     if (AddressUtils.isSmartContractAddress(address)) {
@@ -182,17 +186,20 @@ export class AccountService {
       }
 
       if (AddressUtils.isSmartContractAddress(address) && account.code) {
-        const deployTxHash = await this.getAccountDeployedTxHash(address);
+        const [deployTxHash, deployedAt, isVerified] = await Promise.all([
+          this.getAccountDeployedTxHash(address),
+          this.getAccountDeployedAt(address),
+          this.getAccountIsVerified(address, account.codeHash),
+        ]);
+
         if (deployTxHash) {
           account.deployTxHash = deployTxHash;
         }
 
-        const deployedAt = await this.getAccountDeployedAt(address);
         if (deployedAt) {
           account.deployedAt = deployedAt;
         }
 
-        const isVerified = await this.getAccountIsVerified(address, account.codeHash);
         if (isVerified) {
           account.isVerified = isVerified;
         }
@@ -350,36 +357,41 @@ export class AccountService {
       }
     }
 
-    for (const account of accounts) {
-      account.shard = AddressUtils.computeShard(AddressUtils.bech32Decode(account.address), shardCount);
-      account.assets = assets[account.address];
+    await ConcurrencyUtils.executeWithConcurrencyLimit(
+      accounts,
+      async (account) => {
+        account.shard = AddressUtils.computeShard(AddressUtils.bech32Decode(account.address), shardCount);
+        account.assets = assets[account.address];
 
-      if (options.withDeployInfo && AddressUtils.isSmartContractAddress(account.address)) {
-        const [deployedAt, deployTxHash] = await Promise.all([
-          this.getAccountDeployedAt(account.address),
-          this.getAccountDeployedTxHash(account.address),
-        ]);
+        if (options.withDeployInfo && AddressUtils.isSmartContractAddress(account.address)) {
+          const [deployedAt, deployTxHash] = await Promise.all([
+            this.getAccountDeployedAt(account.address),
+            this.getAccountDeployedTxHash(account.address),
+          ]);
 
-        account.deployedAt = deployedAt;
-        account.deployTxHash = deployTxHash;
-      }
+          account.deployedAt = deployedAt;
+          account.deployTxHash = deployTxHash;
+        }
 
-      if (options.withTxCount) {
-        account.txCount = await this.getAccountTxCount(account.address);
-      }
+        if (options.withTxCount) {
+          account.txCount = await this.getAccountTxCount(account.address);
+        }
 
-      if (options.withScrCount) {
-        account.scrCount = await this.getAccountScResults(account.address);
-      }
+        if (options.withScrCount) {
+          account.scrCount = await this.getAccountScResults(account.address);
+        }
 
-      if (options.withOwnerAssets && account.ownerAddress) {
-        account.ownerAssets = assets[account.ownerAddress];
-      }
+        if (options.withOwnerAssets && account.ownerAddress) {
+          account.ownerAssets = assets[account.ownerAddress];
+        }
 
-      if (verifiedAccounts && verifiedAccounts.includes(account.address)) {
-        account.isVerified = true;
-      }
-    }
+        if (verifiedAccounts && verifiedAccounts.includes(account.address)) {
+          account.isVerified = true;
+        }
+      },
+      6,
+      'AccountService.getAccountsRaw',
+    );
 
     return accounts;
   }

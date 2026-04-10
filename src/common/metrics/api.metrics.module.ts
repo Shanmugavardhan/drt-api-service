@@ -1,4 +1,4 @@
-import { MetricsModule } from "@terradharitri/sdk-nestjs-monitoring";
+import { MetricsModule } from "@sravankumar02/sdk-nestjs-monitoring";
 import { Global, Module } from "@nestjs/common";
 import { EventEmitterModule } from "@nestjs/event-emitter";
 import { ApiMetricsService } from "./api.metrics.service";

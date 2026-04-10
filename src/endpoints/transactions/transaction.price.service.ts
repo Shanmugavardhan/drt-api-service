@@ -1,5 +1,5 @@
-import { Constants } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { Constants } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Injectable } from "@nestjs/common";
 import { CacheInfo } from "src/utils/cache.info";
 import { TransactionDetailed } from "./entities/transaction.detailed";

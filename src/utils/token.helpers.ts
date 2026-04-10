@@ -3,9 +3,9 @@ import { Nft } from "src/endpoints/nfts/entities/nft";
 import { NftType } from "src/endpoints/nfts/entities/nft.type";
 import { CollectionRoles } from "src/endpoints/tokens/entities/collection.roles";
 import { TokenRoles } from "src/endpoints/tokens/entities/token.roles";
-import { ApiUtils } from '@terradharitri/sdk-nestjs-http';
-import '@terradharitri/sdk-nestjs-common/lib/utils/extensions/string.extensions';
-import { BinaryUtils } from "@terradharitri/sdk-nestjs-common";
+import { ApiUtils } from '@sravankumar02/sdk-nestjs-http';
+import '@sravankumar02/sdk-nestjs-common/lib/utils/extensions/string.extensions';
+import { BinaryUtils } from "@sravankumar02/sdk-nestjs-common";
 
 export class TokenHelpers {
   static canBool(string: string) {
@@ -18,6 +18,12 @@ export class TokenHelpers {
     uri = ApiUtils.replaceUri(uri, 'https://gateway.pinata.cloud/ipfs', prefix);
     uri = ApiUtils.replaceUri(uri, 'https://dweb.link/ipfs', prefix);
     uri = ApiUtils.replaceUri(uri, 'ipfs:/', prefix);
+    uri = ApiUtils.replaceUri(uri, 'https://media.numbat.com/nfts/asset', prefix);
+    uri = ApiUtils.replaceUri(uri, 'https://devnet-media.numbat.com/nfts/asset', prefix);
+    uri = ApiUtils.replaceUri(uri, 'https://testnet-media.numbat.com/nfts/asset', prefix);
+    uri = ApiUtils.replaceUri(uri, 'https://api.dharitri.org/media/nfts/asset', prefix);
+    uri = ApiUtils.replaceUri(uri, 'https://pdt-belts-marc-are.trycloudflare.com/media/nfts/asset', prefix);
+    uri = ApiUtils.replaceUri(uri, 'https://testnet-api.dharitri.org/media/nfts/asset', prefix);
     uri = uri.replace(/https\:\/\/\w*\.mypinata\.cloud\/ipfs/, prefix);
 
     if (uri.endsWith('.ipfs.dweb.link')) {

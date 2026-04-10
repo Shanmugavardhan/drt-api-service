@@ -5,9 +5,12 @@ import { ProcessNftSettings } from 'src/endpoints/process-nfts/entities/process.
 import { NftWorkerService } from 'src/queue.worker/nft.worker/nft.worker.service';
 import { CacheInfo } from '../../utils/cache.info';
 import { NotifierEvent } from './entities/notifier.event';
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
-import { BinaryUtils, OriginLogger } from '@terradharitri/sdk-nestjs-common';
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
+import { BinaryUtils, OriginLogger } from '@sravankumar02/sdk-nestjs-common';
 import { IndexerService } from '../indexer/indexer.service';
+import { NftSubType } from 'src/endpoints/nfts/entities/nft.sub.type';
+import { Inject } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class RabbitMqNftHandlerService {
@@ -18,10 +21,11 @@ export class RabbitMqNftHandlerService {
     private readonly nftService: NftService,
     private readonly indexerService: IndexerService,
     private readonly cachingService: CacheService,
+    @Inject('PUBSUB_SERVICE') private clientProxy: ClientProxy,
   ) { }
 
   private async getCollectionType(collectionIdentifier: string): Promise<NftType | null> {
-    const type = await this.cachingService.getLocal<NftType>(CacheInfo.CollectionType(collectionIdentifier).key) ??
+    const type = this.cachingService.getLocal<NftType>(CacheInfo.CollectionType(collectionIdentifier).key) ??
       await this.getCollectionTypeRaw(collectionIdentifier);
 
     if (!type) {
@@ -62,7 +66,19 @@ export class RabbitMqNftHandlerService {
     nft.attributes = attributes;
 
     try {
-      await this.nftWorkerService.addProcessNftQueueJob(nft, new ProcessNftSettings({ forceRefreshMetadata: true }));
+      const isDynamicNft = this.isDynamicNftType(nft.subType);
+
+      if (isDynamicNft) {
+        this.logger.log(`Processing dynamic NFT with identifier '${identifier}', forcing refresh of metadata and media`);
+
+        await this.nftWorkerService.addProcessNftQueueJob(nft, new ProcessNftSettings({
+          forceRefreshMetadata: true,
+          forceRefreshMedia: true,
+          forceRefreshThumbnail: true,
+        }));
+      } else {
+        await this.nftWorkerService.addProcessNftQueueJob(nft, new ProcessNftSettings({ forceRefreshMetadata: true }));
+      }
     } catch (error) {
       this.logger.error(`An unhandled error occurred when processing NFT update attributes event for NFT with identifier '${identifier}'`);
       this.logger.error(error);
@@ -71,14 +87,23 @@ export class RabbitMqNftHandlerService {
     }
   }
 
+  private isDynamicNftType(subType?: NftSubType): boolean {
+    if (subType) {
+      return [
+        NftSubType.DynamicNonFungibleDCDT,
+        NftSubType.DynamicSemiFungibleDCDT,
+        NftSubType.DynamicMetaDCDT,
+      ].includes(subType);
+    }
+
+    return false;
+  }
+
   public async handleNftCreateEvent(event: NotifierEvent): Promise<boolean> {
     const identifier = this.getNftIdentifier(event.topics);
 
     const collectionIdentifier = identifier.split('-').slice(0, 2).join('-');
     const collectionType = await this.getCollectionType(collectionIdentifier);
-    if (collectionType === NftType.MetaDCDT) {
-      return false;
-    }
 
     this.logger.log(`Detected 'DCDTNFTCreate' event for NFT with identifier '${identifier}' and collection type '${collectionType}'`);
 
@@ -92,6 +117,21 @@ export class RabbitMqNftHandlerService {
     }
 
     try {
+      const isDynamicNft = this.isDynamicNftType(nft.subType);
+
+      if (isDynamicNft) {
+        this.logger.log(`Processing dynamic NFT creation with identifier '${identifier}', forcing full refresh`);
+
+        await this.nftWorkerService.addProcessNftQueueJob(nft, new ProcessNftSettings({
+          uploadAsset: true,
+          forceRefreshMetadata: true,
+          forceRefreshMedia: true,
+          forceRefreshThumbnail: true,
+        }));
+
+        return true;
+      }
+
       const needsProcessing = await this.nftWorkerService.needsProcessing(nft, new ProcessNftSettings());
       if (needsProcessing) {
         await this.nftWorkerService.addProcessNftQueueJob(nft, new ProcessNftSettings({ uploadAsset: true }));
@@ -100,6 +140,70 @@ export class RabbitMqNftHandlerService {
       return true;
     } catch (error) {
       this.logger.error(`An unhandled error occurred when processing NFT Create event for NFT with identifier '${identifier}'`);
+      this.logger.error(error);
+      return false;
+    }
+  }
+
+  public async handleNftBurnEvent(event: NotifierEvent): Promise<boolean> {
+    const identifier = this.getNftIdentifier(event.topics);
+
+    this.logger.log(`Detected 'DCDTNFTBurn' event for NFT with identifier '${identifier}'`);
+
+    try {
+      const cacheKey = `nft:${identifier}`;
+      await this.cachingService.delete(cacheKey);
+
+      this.clientProxy.emit('deleteCacheKeys', [cacheKey]);
+
+      this.logger.log(`Cache invalidated for NFT with identifier '${identifier}' across all instances`);
+      return true;
+    } catch (error) {
+      this.logger.error(`An unhandled error occurred when processing NFT Burn event for NFT with identifier '${identifier}'`);
+      this.logger.error(error);
+      return false;
+    }
+  }
+
+  public async handleNftMetadataEvent(event: NotifierEvent): Promise<boolean> {
+    const identifier = this.getNftIdentifier(event.topics);
+
+    this.logger.log(`Detected '${event.identifier}' event for NFT with identifier '${identifier}'`);
+
+    const nft = await this.nftService.getSingleNft(identifier);
+    if (!nft) {
+      this.logger.log(`Could not fetch NFT details for NFT with identifier '${identifier}'`);
+      return false;
+    }
+
+    try {
+      await this.nftWorkerService.addProcessNftQueueJob(nft, new ProcessNftSettings({
+        forceRefreshMetadata: true,
+        forceRefreshMedia: true,
+      }));
+      return true;
+    } catch (error) {
+      this.logger.error(`An unhandled error occurred when processing '${event.identifier}' event for NFT with identifier '${identifier}'`);
+      this.logger.error(error);
+      return false;
+    }
+  }
+
+  public async handleNftModifyCreatorEvent(event: NotifierEvent): Promise<boolean> {
+    const identifier = this.getNftIdentifier(event.topics);
+
+    this.logger.log(`Detected 'DCDTModifyCreator' event for NFT with identifier '${identifier}'`);
+
+    try {
+      const cacheKey = `nft:${identifier}`;
+      await this.cachingService.delete(cacheKey);
+
+      this.clientProxy.emit('deleteCacheKeys', [cacheKey]);
+
+      this.logger.log(`Cache invalidated for NFT with identifier '${identifier}' across all instances`);
+      return true;
+    } catch (error) {
+      this.logger.error(`An unhandled error occurred when processing NFT ModifyCreator event for NFT with identifier '${identifier}'`);
       this.logger.error(error);
       return false;
     }

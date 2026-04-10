@@ -10,9 +10,9 @@ import { TransactionExtractorInterface } from "./extractor/transaction.extractor
 import { TransferOwnershipExtractor } from "./extractor/transfer.ownership.extractor";
 import { MetricsEvents } from "src/utils/metrics-events.constants";
 import { LogMetricsEvent } from "src/common/entities/log.metrics.event";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
-import { BinaryUtils, OriginLogger } from "@terradharitri/sdk-nestjs-common";
-import { PerformanceProfiler } from "@terradharitri/sdk-nestjs-monitoring";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
+import { BinaryUtils, OriginLogger } from "@sravankumar02/sdk-nestjs-common";
+import { PerformanceProfiler } from "@sravankumar02/sdk-nestjs-monitoring";
 import { StakeFunction } from "src/endpoints/transactions/transaction-action/recognizers/staking/entities/stake.function";
 import { ShardTransaction, TransactionProcessor } from "@terradharitri/sdk-transaction-processor";
 

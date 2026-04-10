@@ -3,8 +3,8 @@ import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { VmQueryService } from "src/endpoints/vm.query/vm.query.service";
 import { DelegationLegacy } from "./entities/delegation.legacy";
 import { AccountDelegationLegacy } from "./entities/account.delegation.legacy";
-import { AddressUtils } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { AddressUtils } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { CacheInfo } from "src/utils/cache.info";
 
 @Injectable()
@@ -89,8 +89,8 @@ export class DelegationLegacyService {
       userActiveStake,
       userUnstakedStake,
       userDeferredPaymentStake,
-    ] = userStakeByTypeEncoded ? userStakeByTypeEncoded.map((encoded) => this.numberDecode(encoded)) : 
-      ['0', '0', '0', '0', '0'];
+    ] = userStakeByTypeEncoded ? userStakeByTypeEncoded.map((encoded) => this.numberDecode(encoded)) :
+        ['0', '0', '0', '0', '0'];
 
     const claimableRewards = claimableRewardsEncoded ? this.numberDecode(claimableRewardsEncoded[0]) : '0';
 

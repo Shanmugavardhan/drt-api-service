@@ -1,5 +1,5 @@
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Controller } from "@nestjs/common";
 import { EventPattern } from "@nestjs/microservices";
 
@@ -12,10 +12,10 @@ export class PubSubListenerController {
   ) { }
 
   @EventPattern('deleteCacheKeys')
-  async deleteCacheKey(keys: string[]) {
+  deleteCacheKey(keys: string[]) {
     for (const key of keys) {
       this.logger.log(`Deleting local cache key ${key}`);
-      await this.cachingService.deleteLocal(key);
+      this.cachingService.deleteLocal(key);
     }
   }
 

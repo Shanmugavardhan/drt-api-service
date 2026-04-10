@@ -1,4 +1,4 @@
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Test } from "@nestjs/testing";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { GatewayService } from "src/common/gateway/gateway.service";
@@ -19,7 +19,7 @@ import { IdentitiesService } from "src/endpoints/identities/identities.service";
 import { NodeAuctionFilter } from "src/endpoints/nodes/entities/node.auction.filter";
 import * as fs from 'fs';
 import * as path from 'path';
-import { ApiService } from "@terradharitri/sdk-nestjs-http";
+import { ApiService } from "@sravankumar02/sdk-nestjs-http";
 import { Node } from "src/endpoints/nodes/entities/node";
 
 describe('NodeService', () => {
@@ -156,7 +156,7 @@ describe('NodeService', () => {
         nonce: 8160575,
         instances: 1,
         owner: "drt1kz2kumr0clug4ht2ek0l4l9drvq3rne9lmkwrjf3qv2luyuuaj2slwe0vh",
-        provider: "drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqy8llllssrzx6z",
+        provider: "drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqy8lllls8knyn2",
         stake: "2500000000000000000000",
         topUp: "688187259066013399629",
         locked: "3188187259066013399629",
@@ -306,7 +306,7 @@ describe('NodeService', () => {
 
       it('should return the correct count of nodes with provider', async () => {
         const allNodesSpy = jest.spyOn(nodeService, 'getAllNodes').mockResolvedValueOnce(Promise.resolve(mockNodes));
-        const provider = "drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqxllllls3s3f78";
+        const provider = "drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqxlllllsx9qth0";
         const result = await nodeService.getNodeCount(new NodeFilter({ provider: provider }));
 
         expect(result).toStrictEqual(2);
@@ -505,7 +505,7 @@ describe('NodeService', () => {
           '003ba6237f0f7c269eebfecb6a0a0796076c02593846e1ce89aee9b832b94dd54e93d35b03dc3d5944b1aae916722506faf959a47cabf2d00f567ad50b10f8f1a40ab0316fdf302454f7aea58b23109ccfdce082bd16fb262342a1382b802c10'];
         const epoch = 10;
         const keys = blses.map((bls) => CacheInfo.OwnerByEpochAndBls(epoch, bls).key);
-        const values = ['drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqy8llllssrzx6z', 'drt1qzwd98g6xjs6h33ezxc9ey766ee082z9q4yvj46r8p7xqnl0eenq36u7p0'];
+        const values = ['drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqy8lllls8knyn2', 'drt1qzwd98g6xjs6h33ezxc9ey766ee082z9q4yvj46r8p7xqnl0eenq36u7p0'];
         const barchGetManyRemoteSpy = jest.spyOn(nodeService['cacheService'], 'batchGetManyRemote').mockResolvedValue(values);
 
         const result = await nodeService.getOwners(blses, epoch);
@@ -547,7 +547,7 @@ describe('NodeService', () => {
       it('should return empty array if getBlsKeysStatusListEncoded is returning []', async () => {
         const address = 'drt1kz2kumr0clug4ht2ek0l4l9drvq3rne9lmkwrjf3qv2luyuuaj2slwe0vh';
 
-        jest.spyOn(apiConfigService, 'getAuctionContractAddress').mockReturnValue('drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf');
+        jest.spyOn(apiConfigService, 'getAuctionContractAddress').mockReturnValue('drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp');
         jest.spyOn(nodeService['vmQueryService'], 'vmQuery').mockResolvedValueOnce([]);
 
         const result = await nodeService.getOwnerBlses(address);
@@ -564,7 +564,7 @@ describe('NodeService', () => {
           'ADumI38PfCae6/7LagoHlgdsAlk4RuHOia7puDK5TdVOk9NbA9w9WUSxqukWciUG+vlZpHyr8tAPVnrVCxD48aQKsDFv3zAkVPeupYsjEJzP3OCCvRb7JiNCoTgrgCwQ',
         ];
 
-        jest.spyOn(apiConfigService, 'getAuctionContractAddress').mockReturnValue('drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf');
+        jest.spyOn(apiConfigService, 'getAuctionContractAddress').mockReturnValue('drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp');
         jest.spyOn(nodeService['vmQueryService'], 'vmQuery').mockResolvedValueOnce(getBlsKeysStatusListEncoded);
 
         const result = await nodeService.getOwnerBlses(address);

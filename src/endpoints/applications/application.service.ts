@@ -9,7 +9,7 @@ import { TransferService } from '../transfers/transfer.service';
 import { TransactionFilter } from '../transactions/entities/transaction.filter';
 import { TransactionType } from '../transactions/entities/transaction.type';
 import { Logger } from '@nestjs/common';
-import { CacheService } from '@terradharitri/sdk-nestjs-cache';
+import { CacheService } from '@sravankumar02/sdk-nestjs-cache';
 import { CacheInfo } from 'src/utils/cache.info';
 
 @Injectable()

@@ -1,7 +1,7 @@
 import { Address, Transaction as DrtJsTransaction, TransactionHash, TransactionOptions, TransactionPayload, TransactionVersion } from "@terradharitri/sdk-core/out";
 import { Signature } from "@terradharitri/sdk-core/out/signature";
-import { BinaryUtils } from "@terradharitri/sdk-nestjs-common";
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { BinaryUtils } from "@sravankumar02/sdk-nestjs-common";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Injectable, Logger } from "@nestjs/common";
 import { TransactionBatch } from "./entities/transaction.batch";
 import { TransactionBatchStatus } from "./entities/transaction.batch.status";

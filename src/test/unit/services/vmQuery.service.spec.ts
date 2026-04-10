@@ -1,4 +1,4 @@
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { TestingModule, Test } from "@nestjs/testing";
 import { GatewayService } from "src/common/gateway/gateway.service";

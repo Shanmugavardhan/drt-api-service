@@ -1,4 +1,4 @@
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
 import { Test } from "@nestjs/testing";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { NetworkEconomics } from "src/common/gateway/entities/network.economics";
@@ -192,7 +192,7 @@ describe('Stake Service', () => {
       const queueSize = Buffer.from('10', 'ascii').toString('base64');
       const nodesMock = require('../../mocks/nodes.mock.json');
 
-      jest.spyOn(apiConfigService, 'getStakingContractAddress').mockReturnValue('drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqqllls9k7r6g');
+      jest.spyOn(apiConfigService, 'getStakingContractAddress').mockReturnValue('drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqlllsjr0pnq');
       jest.spyOn(stakeService['vmQueryService'], 'vmQuery').mockResolvedValue([queueSize]);
       jest.spyOn(stakeService['nodeService'], 'getAllNodes').mockResolvedValue(nodesMock);
 

@@ -1,6 +1,6 @@
-import { CacheService } from "@terradharitri/sdk-nestjs-cache";
-import { AddressUtils } from "@terradharitri/sdk-nestjs-common";
-import { ApiService, ApiUtils } from "@terradharitri/sdk-nestjs-http";
+import { CacheService } from "@sravankumar02/sdk-nestjs-cache";
+import { AddressUtils } from "@sravankumar02/sdk-nestjs-common";
+import { ApiService, ApiUtils } from "@sravankumar02/sdk-nestjs-http";
 import { Test } from "@nestjs/testing";
 import { ApiConfigService } from "src/common/api-config/api.config.service";
 import { AssetsService } from "src/common/assets/assets.service";
@@ -283,6 +283,7 @@ describe('Account Service', () => {
         address: 'drt1qga7ze0l03chfgru0a32wxqf2226nzrxnyhzer9lmudqhjgy7ycq0wn4su',
         balance: '162486906126924046',
         nonce: 45,
+        timestampMs: 0,
         timestamp: 0,
         shard: 0,
         ownerAddress: '',
@@ -431,6 +432,7 @@ describe('Account Service', () => {
         isRelayed: false,
         isScCall: true,
         relayerSignature: '',
+        timestampMs: 1698322776000,
       });
 
       const result = await service.getAccountDeployedAtRaw(address);
@@ -850,9 +852,9 @@ describe('Account Service', () => {
         name: 'Dharitri DNS: Contract 239',
         description: '',
         social: new AccountAssetsSocial({
-          website: "https://dharitrix.org",
-          twitter: "https://twitter.com/DharitriXApp",
-          telegram: "https://t.me/DharitriXApp",
+          website: "https://dharitrix.com",
+          twitter: "https://twitter.com/DharitrixApp",
+          telegram: "https://t.me/DharitrixApp",
           blog: "https://dharitri.org/blog/durian-exchange-moa-tokenomics",
         }),
         tags: ['dns'],
@@ -886,13 +888,13 @@ describe('Account Service', () => {
   describe('getAccounts', () => {
     const elasticIndexerMock = [
       {
-        address: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf',
+        address: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp',
         developerRewardsNum: 1.2784189545,
         totalBalanceWithStakeNum: 17420283.932524484,
         balance: '17420283932524481604580318',
         balanceNum: 17420283.932524484,
         developerRewards: '1278418954499998714',
-        currentOwner: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf',
+        currentOwner: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp',
         totalBalanceWithStake: '17420283932524481604580318',
         shardID: 4294967295,
         nonce: 1,
@@ -903,14 +905,14 @@ describe('Account Service', () => {
     const assets: { [key: string]: AccountAssets } = {
       drt1qqqqqqqqqqqqqpgqykt0f03czqj2p9qltpygzu7jwlzkaxqaqpdqjz074y: {
         name: "System: Staking Module",
-        description: "Smart contract containing all staked rEWA on the network",
+        description: "Smart contract containing all staked REWA on the network",
         tags: [
           "system",
           "staking",
           "module",
         ],
-        iconPng: "https://raw.githubusercontent.com/TerraDharitri/drt-assets/master/accounts/icons/dharitri.png",
-        iconSvg: "https://raw.githubusercontent.com/TerraDharitri/drt-assets/master/accounts/icons/dharitri.svg",
+        iconPng: "https://raw.githubusercontent.com/terradharitri/drt-assets/master/accounts/icons/dharitri.png",
+        iconSvg: "https://raw.githubusercontent.com/terradharitri/drt-assets/master/accounts/icons/dharitri.svg",
         icon: '',
         proof: '',
         social: undefined,
@@ -920,14 +922,14 @@ describe('Account Service', () => {
     const ownerAssets: { [key: string]: AccountAssets } = {
       drt1qqqqqqqqqqqqqpgqykt0f03czqj2p9qltpygzu7jwlzkaxqaqpdqjz074y: {
         name: "System: Staking Module",
-        description: "Smart contract containing all staked rEWA on the network",
+        description: "Smart contract containing all staked REWA on the network",
         tags: [
           "system",
           "staking",
           "module",
         ],
-        iconPng: "https://raw.githubusercontent.com/TerraDharitri/drt-assets/master/accounts/icons/dharitri.png",
-        iconSvg: "https://raw.githubusercontent.com/TerraDharitri/drt-assets/master/accounts/icons/dharitri.svg",
+        iconPng: "https://raw.githubusercontent.com/terradharitri/drt-assets/master/accounts/icons/dharitri.png",
+        iconSvg: "https://raw.githubusercontent.com/terradharitri/drt-assets/master/accounts/icons/dharitri.svg",
         icon: '',
         proof: '',
         social: undefined,
@@ -936,22 +938,22 @@ describe('Account Service', () => {
 
     const accountsRawMock = [
       new Account({
-        address: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf',
+        address: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp',
         balance: '17420808473771662313204012',
         nonce: 1,
         timestamp: 1703677860,
         shard: 4294967295,
-        ownerAddress: 'drt1yvesqqqqqqqqqqqqqqqqqqqqqqqqyvesqqqqqqqqqqqqqqqplllsphc9lf',
+        ownerAddress: 'drt1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllskzf8kp',
         assets: {
           name: "System: Staking Module",
-          description: "Smart contract containing all staked rEWA on the network",
+          description: "Smart contract containing all staked REWA on the network",
           tags: [
             "system",
             "staking",
             "module",
           ],
-          iconPng: "https://raw.githubusercontent.com/TerraDharitri/drt-assets/master/accounts/icons/dharitri.png",
-          iconSvg: "https://raw.githubusercontent.com/TerraDharitri/drt-assets/master/accounts/icons/dharitri.svg",
+          iconPng: "https://raw.githubusercontent.com/terradharitri/drt-assets/master/accounts/icons/dharitri.png",
+          iconSvg: "https://raw.githubusercontent.com/terradharitri/drt-assets/master/accounts/icons/dharitri.svg",
           icon: '',
           proof: '',
           social: undefined,

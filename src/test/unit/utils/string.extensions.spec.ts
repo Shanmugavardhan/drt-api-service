@@ -1,4 +1,4 @@
-import '@terradharitri/sdk-nestjs-common/lib/utils/extensions/string.extensions';
+import '@sravankumar02/sdk-nestjs-common/lib/utils/extensions/string.extensions';
 
 describe('String Extensions', () => {
   it('removePrefix', () => {

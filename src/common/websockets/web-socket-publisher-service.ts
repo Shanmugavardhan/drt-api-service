@@ -1,4 +1,4 @@
-import { AddressUtils } from "@terradharitri/sdk-nestjs-common";
+import { AddressUtils } from "@sravankumar02/sdk-nestjs-common";
 import { ShardTransaction } from "@terradharitri/sdk-transaction-processor";
 import { Injectable } from "@nestjs/common";
 import { WebSocketGateway, WebSocketServer } from "@nestjs/websockets";

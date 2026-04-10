@@ -1,13 +1,17 @@
-import { Constants } from '@terradharitri/sdk-nestjs-common';
+import { Constants, OriginLogger } from '@sravankumar02/sdk-nestjs-common';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseConnectionOptions } from '../persistence/entities/connection.options';
 import { StatusCheckerThresholds } from './entities/status-checker-thresholds';
 import { LogTopic } from '@terradharitri/sdk-transaction-processor/lib/types/log-topic';
+import { TimeUtils } from 'src/utils/time.utils';
 
 @Injectable()
 export class ApiConfigService {
-  constructor(private readonly configService: ConfigService) { }
+  private readonly logger = new OriginLogger(ApiConfigService.name);
+
+  constructor(private readonly configService: ConfigService) {
+  }
 
   getConfig<T>(configKey: string): T | undefined {
     return this.configService.get<T>(configKey);
@@ -83,7 +87,7 @@ export class ApiConfigService {
     return url;
   }
 
-  getDurianIdUrl(): string | undefined {
+  getMaiarIdUrl(): string | undefined {
     return this.configService.get<string>('urls.durianId');
   }
 
@@ -389,6 +393,27 @@ export class ApiConfigService {
     return isApiActive;
   }
 
+  isElasticCircuitBreakerEnabled(): boolean {
+    const isEnabled = this.configService.get<boolean>('features.elasticCircuitBreaker.enabled');
+    return isEnabled !== undefined ? isEnabled : false;
+  }
+
+  getElasticCircuitBreakerConfig(): {
+    durationThresholdMs: number,
+    failureCountThreshold: number,
+    resetTimeoutMs: number
+  } {
+    return {
+      durationThresholdMs: this.configService.get<number>('features.elasticCircuitBreaker.durationThresholdMs') ?? 5000,
+      failureCountThreshold: this.configService.get<number>('features.elasticCircuitBreaker.failureCountThreshold') ?? 5000,
+      resetTimeoutMs: this.configService.get<number>('features.elasticCircuitBreaker.resetTimeoutMs') ?? 5000,
+    };
+  }
+
+  getElasticMigratedIndicesConfig(): Record<string, string> {
+    return this.configService.get<Record<string, string>>('features.elasticMigratedIndices') ?? {};
+  }
+
   getIsWebsocketApiActive(): boolean {
     return this.configService.get<boolean>('api.websocket') ?? true;
   }
@@ -541,6 +566,11 @@ export class ApiConfigService {
     return s3Region;
   }
 
+  getAwsS3Endpoint(): string | undefined {
+    const s3Endpoint = this.configService.get<string>('aws.s3Endpoint');
+    return s3Endpoint && s3Endpoint.length > 0 ? s3Endpoint : undefined;
+  }
+
   getMetaChainShardId(): number {
     const metaChainShardId = this.configService.get<number>('metaChainShardId');
     if (metaChainShardId === undefined) {
@@ -558,6 +588,15 @@ export class ApiConfigService {
     const inflationAmounts = this.configService.get<number[]>('inflation');
     if (!inflationAmounts) {
       throw new Error('No inflation amounts present');
+    }
+
+    return inflationAmounts;
+  }
+
+  getStakingV5InflationAmounts(): number[] {
+    const inflationAmounts = this.configService.get<number[]>('stakingV5Inflation');
+    if (!inflationAmounts) {
+      throw new Error('No staking v5 inflation amounts present');
     }
 
     return inflationAmounts;
@@ -583,15 +622,6 @@ export class ApiConfigService {
     }
 
     return mediaUrl;
-  }
-
-  getNftThumbnailsUrl(): string {
-    const nftThumbnailsUrl = this.configService.get<string>('urls.nftThumbnails');
-    if (!nftThumbnailsUrl) {
-      throw new Error('No nft thumbnails url present');
-    }
-
-    return nftThumbnailsUrl;
   }
 
   getSecurityAdmins(): string[] {
@@ -870,12 +900,39 @@ export class ApiConfigService {
     return this.configService.get<number>('features.chainAndromeda.activationEpoch') ?? 99999;
   }
 
+  isStakingV5Enabled(): boolean {
+    return this.configService.get<boolean>('features.stakingV5.enabled') ?? false;
+  }
+
+  getStakingV5ActivationEpoch(): number {
+    return this.configService.get<number>('features.stakingV5.activationEpoch') ?? 99999;
+  }
+
+  isDeprecatedRelayedV1V2Enabled(): boolean {
+    return this.configService.get<boolean>('features.deprecatedRelayedV1V2.enabled') ?? false;
+  }
+
+  getDeprecatedRelayedV1V2ActivationEpoch(): number {
+    return this.configService.get<number>('features.deprecatedRelayedV1V2.activationEpoch') ?? 99999;
+  }
+
+  shouldDeprecateRelayedV1V2(epoch: number): boolean {
+    const isEnabled = this.isDeprecatedRelayedV1V2Enabled();
+    if (!isEnabled) {
+      return false;
+    }
+
+    return epoch >= this.getDeprecatedRelayedV1V2ActivationEpoch();
+  }
+
   isAssetsCdnFeatureEnabled(): boolean {
     return this.configService.get<boolean>('features.assetsFetch.enabled') ?? false;
   }
 
   getAssetsCdnUrl(): string {
-    return this.configService.get<string>('features.assetsFetch.assetesUrl') ?? 'https://tools.dharitri.org/assets-cdn';
+    return this.configService.get<string>('features.assetsFetch.assetsUrl')
+      ?? this.configService.get<string>('features.assetsFetch.assetesUrl') // todo: remove this in the future
+      ?? 'https://tools.dharitri.org/assets-cdn';
   }
 
   isTokensFetchFeatureEnabled(): boolean {
@@ -921,11 +978,130 @@ export class ApiConfigService {
     return this.configService.get<number>('caching.cacheDuration') ?? 3;
   }
 
-  isMediaRedirectFeatureEnabled(): boolean {
-    return this.configService.get<boolean>('features.mediaRedirect.enabled') ?? false;
+  getCompressionEnabled(): boolean {
+    return this.configService.get<boolean>('compression.enabled') ?? false;
   }
 
-  getMediaRedirectFileStorageUrls(): string[] {
-    return this.configService.get<string[]>('features.mediaRedirect.storageUrls') ?? [];
+  getCompressionLevel(): number {
+    return this.configService.get<number>('compression.level') ?? 6;
+  }
+
+  getCompressionThreshold(): number {
+    return this.configService.get<number>('compression.threshold') ?? 1024;
+  }
+
+  getCompressionChunkSize(): number {
+    return this.configService.get<number>('compression.chunkSize') ?? 16384;
+  }
+
+  getIsWebsocketSubscriptionActive(): boolean {
+    const isWebsocketSubscriptionActive = this.configService.get<boolean>('features.websocketSubscription.enabled');
+    if (isWebsocketSubscriptionActive === undefined) {
+      throw new Error('No features.websocketSubscription.enabled flag present');
+    }
+
+    return isWebsocketSubscriptionActive;
+  }
+
+  getWebsocketSubscriptionPort(): number {
+    const port = this.configService.get<number>('features.websocketSubscription.port');
+    if (port === undefined) {
+      throw new Error('No features.websocketSubscription.port present');
+    }
+
+    return port;
+  }
+
+  getWebsocketSubscriptionBroadcastIntervalMs(): number {
+    return this.configService.get<number>('features.websocketSubscription.broadcastIntervalMs') ?? 6000;
+  }
+
+  getWebsocketMaxSubscriptionsPerInstance(): number {
+    return this.configService.get<number>('features.websocketSubscription.maxSubscriptionsPerInstance') ?? 10_000;
+  }
+
+  getWebsocketMaxSubscriptionsPerClient(): number {
+    return this.configService.get<number>('features.websocketSubscription.maxSubscriptionsPerClient') ?? 5;
+  }
+
+  getHeadersForCustomUrl(url: string): Record<string, string> | undefined {
+    let customUrlConfigs = this.configService.get<any>('customUrlHeaders');
+
+    if (!customUrlConfigs) {
+      return undefined;
+    }
+
+    if (typeof customUrlConfigs === 'string') {
+      try {
+        customUrlConfigs = JSON.parse(customUrlConfigs);
+      } catch (error) {
+        return undefined;
+      }
+    }
+
+    if (!Array.isArray(customUrlConfigs) && typeof customUrlConfigs === 'object') {
+      let workingConfig = customUrlConfigs;
+
+      while (workingConfig && workingConfig[''] && typeof workingConfig[''] === 'object') {
+        workingConfig = workingConfig[''];
+      }
+
+      const arrayValues: any[] = [];
+      for (const key in workingConfig) {
+        if (!isNaN(Number(key))) {
+          let item = workingConfig[key];
+          while (item && item[''] && typeof item[''] === 'object') {
+            item = item[''];
+          }
+          arrayValues[Number(key)] = item;
+        }
+      }
+
+      if (arrayValues.length > 0) {
+        customUrlConfigs = arrayValues.filter(item => item !== undefined);
+        this.logger.log(`Loaded ${customUrlConfigs.length} custom URL header config(s)`);
+      } else {
+        return undefined;
+      }
+    }
+
+    if (!Array.isArray(customUrlConfigs)) {
+      return undefined;
+    }
+
+    for (const config of customUrlConfigs) {
+      if (config && config.urlPattern && url.includes(config.urlPattern)) {
+        let headers = config.headers;
+        if (headers && headers[''] && typeof headers[''] === 'object') {
+          headers = headers[''];
+        }
+        this.logger.log(`Found custom headers for URL pattern '${config.urlPattern}': ${JSON.stringify(headers)}`);
+        return headers;
+      }
+    }
+
+    return undefined;
+  }
+
+  isChainBarnardEnabled(): boolean {
+    return this.configService.get<boolean>('features.chainBarnard.enabled') ?? false;
+  }
+
+  getChainBarnardActivationEpoch(): number {
+    const epoch = this.configService.get<number>('features.chainBarnard.activationEpoch');
+    if (epoch == null) {
+      return TimeUtils.TIMESTAMP_IN_SECONDS_THRESHOLD + 1;
+    }
+
+    return epoch;
+  }
+
+  getChainBarnardActivationTimestamp(): number {
+    const timestamp = this.configService.get<number>('features.chainBarnard.activationTimestamp');
+    if (timestamp == null) {
+      return TimeUtils.TIMESTAMP_IN_SECONDS_THRESHOLD + 1;
+    }
+
+    return timestamp;
   }
 }

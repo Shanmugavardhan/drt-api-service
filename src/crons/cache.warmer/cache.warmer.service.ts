@@ -17,8 +17,8 @@ import { GatewayComponentRequest } from "src/common/gateway/entities/gateway.com
 import { MoaSettingsService } from "src/endpoints/moa/moa.settings.service";
 import { MoaPairService } from "src/endpoints/moa/moa.pair.service";
 import { MoaFarmService } from "src/endpoints/moa/moa.farm.service";
-import { CacheService, GuestCacheWarmer } from "@terradharitri/sdk-nestjs-cache";
-import { BatchUtils, Constants, Lock, OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { CacheService, GuestCacheWarmer } from "@sravankumar02/sdk-nestjs-cache";
+import { BatchUtils, Constants, Lock, OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { DelegationLegacyService } from "src/endpoints/delegation.legacy/delegation.legacy.service";
 import { SettingsService } from "src/common/settings/settings.service";
 import { TokenService } from "src/endpoints/tokens/token.service";
@@ -34,6 +34,7 @@ import * as JsonDiff from "json-diff";
 import { QueryPagination } from "src/common/entities/query.pagination";
 import { StakeService } from "src/endpoints/stake/stake.service";
 import { ApplicationMostUsed } from "src/endpoints/accounts/entities/application.most.used";
+import { NftType } from '../../common/indexer/entities/nft.type';
 
 @Injectable()
 export class CacheWarmerService {
@@ -155,7 +156,7 @@ export class CacheWarmerService {
     await this.invalidateKey(CacheInfo.TransactionPool.key, pool, this.apiConfigService.getTransactionPoolCacheWarmerTtlInSeconds());
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron('*/2 * * * *')
   @Lock({ name: 'All Tokens invalidations', verbose: true })
   async handleDcdtTokenInvalidations() {
     const tokens = await this.tokenService.getAllTokensRaw();
@@ -320,6 +321,15 @@ export class CacheWarmerService {
   @Lock({ name: 'Elastic updater: Update collection isVerified, nftCount, holderCount', verbose: true })
   async handleUpdateCollectionExtraDetails() {
     const allAssets = await this.assetsService.getAllTokenAssets();
+    const nftTypes = [
+      NftType.NonFungibleDCDT,
+      NftType.SemiFungibleDCDT,
+      NftType.MetaDCDT,
+      NftType.NonFungibleDCDTv2,
+      NftType.DynamicNonFungibleDCDT,
+      NftType.DynamicSemiFungibleDCDT,
+      NftType.DynamicMetaDCDT,
+    ];
 
     for (const key of Object.keys(allAssets)) {
       const collection = await this.indexerService.getCollection(key);
@@ -327,7 +337,7 @@ export class CacheWarmerService {
         continue;
       }
 
-      if (![TokenType.NonFungibleDCDT, TokenType.SemiFungibleDCDT].includes(collection.type as TokenType)) {
+      if (!nftTypes.includes(collection.type as NftType)) {
         continue;
       }
 

@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ApiConfigService } from "../api-config/api.config.service";
 import { GraphQLClient } from 'graphql-request';
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import fetch, { RequestInit } from 'node-fetch';
 
 @Injectable()

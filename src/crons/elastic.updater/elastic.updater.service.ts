@@ -5,7 +5,7 @@ import { AssetsService } from "src/common/assets/assets.service";
 import { NftService } from "src/endpoints/nfts/nft.service";
 import asyncPool from "tiny-async-pool";
 import { PersistenceInterface } from "src/common/persistence/persistence.interface";
-import { BatchUtils, Lock, OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { BatchUtils, Lock, OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 import { NftMedia } from "src/endpoints/nfts/entities/nft.media";
 import { IndexerService } from "src/common/indexer/indexer.service";
 

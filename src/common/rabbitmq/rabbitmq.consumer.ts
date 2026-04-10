@@ -5,7 +5,7 @@ import configuration from 'config/configuration';
 import { NotifierEvent as NotifierEvent } from './entities/notifier.event';
 import { NotifierEventIdentifier } from './entities/notifier.event.identifier';
 import { RabbitMqTokenHandlerService } from './rabbitmq.token.handler.service';
-import { OriginLogger } from '@terradharitri/sdk-nestjs-common';
+import { OriginLogger } from '@sravankumar02/sdk-nestjs-common';
 
 @Injectable()
 export class RabbitMqConsumer {
@@ -40,6 +40,16 @@ export class RabbitMqConsumer {
         break;
       case NotifierEventIdentifier.DCDTNFTUpdateAttributes:
         await this.nftHandlerService.handleNftUpdateAttributesEvent(event);
+        break;
+      case NotifierEventIdentifier.DCDTNFTBurn:
+        await this.nftHandlerService.handleNftBurnEvent(event);
+        break;
+      case NotifierEventIdentifier.DCDTMetaDataUpdate:
+      case NotifierEventIdentifier.DCDTMetaDataRecreate:
+        await this.nftHandlerService.handleNftMetadataEvent(event);
+        break;
+      case NotifierEventIdentifier.DCDTModifyCreator:
+        await this.nftHandlerService.handleNftModifyCreatorEvent(event);
         break;
       case NotifierEventIdentifier.transferOwnership:
         await this.tokenHandlerService.handleTransferOwnershipEvent(event);

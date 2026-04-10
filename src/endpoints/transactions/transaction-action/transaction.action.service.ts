@@ -10,8 +10,8 @@ import { TransactionActionDcdtNftRecognizerService } from "./recognizers/dcdt/tr
 import { TokenTransferService } from "src/endpoints/tokens/token.transfer.service";
 import { TransactionType } from "src/endpoints/transactions/entities/transaction.type";
 import { MetabondingActionRecognizerService } from "./recognizers/moa/moa.metabonding.action.recognizer.service";
-import { AddressUtils, BinaryUtils, StringUtils } from "@terradharitri/sdk-nestjs-common";
-import { OriginLogger } from "@terradharitri/sdk-nestjs-common";
+import { AddressUtils, BinaryUtils, StringUtils } from "@sravankumar02/sdk-nestjs-common";
+import { OriginLogger } from "@sravankumar02/sdk-nestjs-common";
 
 @Injectable()
 export class TransactionActionService {

@@ -4,6 +4,7 @@ export interface Block {
   round: number;
   epoch: number;
   miniBlocksHashes: string[];
+  miniBlocksDetails?: MiniBlockDetails[];
   notarizedBlocksHashes?: string[];
   proposer: number;
   validators: number[],
@@ -11,6 +12,7 @@ export interface Block {
   size: number;
   sizeTxs: number;
   timestamp: number;
+  timestampMs?: number;
   stateRootHash: string;
   prevHash: string;
   shardId: number;
@@ -24,4 +26,16 @@ export interface Block {
   gasRefunded: string;
   gasPenalized: number;
   maxGasLimit: string;
+}
+
+export interface MiniBlockDetails {
+  firstProcessedTx: number;
+  lastProcessedTx: number;
+  senderShard: number;
+  receiverShard: number;
+  mbIndex: number;
+  type: string;
+  procType: string;
+  txsHashes: string[];
+  executionOrderTxsIndices: number[];
 }
